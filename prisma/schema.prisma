@@ -22,7 +22,7 @@ model Veiculo {
 model Motorista {
   id         String   @id @default(uuid())
   nome       String
-  cnh        String
+  cnh        String   @unique
   endereco   String
   telefone   String
   romaneios  Romaneio[]
