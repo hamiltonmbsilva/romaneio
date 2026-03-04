@@ -9,7 +9,7 @@ datasource db {
 
 model Veiculo {
   id            String   @id @default(uuid())
-  placa         String
+  placa         String   @unique
   modelo        String
   ano           Int
   kmInicial     Float
