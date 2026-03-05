@@ -7,9 +7,11 @@ import { MotoristaModule } from './modules/motorista/motorista.module';
 import { ClienteModule } from './modules/cliente/cliente.module';
 import { ProdutoModule } from './modules/produto/produto.module';
 import { EmbalagemModule } from './modules/embalagem/embalagem.module';
+import { RomaneioModule } from './modules/romaneio/romaneio.module';
+import { EntregaModule } from './modules/entrega/entrega.module';
 
 @Module({
-  imports: [PrismaModule,VeiculoModule, MotoristaModule, ClienteModule, ProdutoModule, EmbalagemModule],
+  imports: [PrismaModule,VeiculoModule, MotoristaModule, ClienteModule, ProdutoModule, EmbalagemModule, RomaneioModule, EntregaModule],
   controllers: [AppController],
   providers: [AppService],
 })
