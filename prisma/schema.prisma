@@ -8,66 +8,106 @@ datasource db {
 }
 
 model Veiculo {
-  id            String   @id @default(uuid())
-  placa         String   @unique
-  modelo        String
-  ano           Int
-  kmInicial     Float
-  kmFinal       Float?
-  capacidadeKg  Float
-  romaneios     Romaneio[]
-  createdAt     DateTime @default(now())
+  id           String     @id @default(uuid())
+  placa        String     @unique
+  modelo       String
+  ano          Int
+  kmInicial    Float
+  kmFinal      Float?
+  capacidadeKg Float
+  romaneios    Romaneio[]
+  createdAt    DateTime   @default(now())
 }
 
 model Motorista {
-  id         String   @id @default(uuid())
-  nome       String
-  cnh        String   @unique
-  endereco   String
-  telefone   String
-  romaneios  Romaneio[]
-  createdAt  DateTime @default(now())
+  id        String     @id @default(uuid())
+  nome      String
+  cnh       String     @unique
+  endereco  String
+  telefone  String
+  romaneios Romaneio[]
+  createdAt DateTime   @default(now())
 }
 
 model Cliente {
-  id           String   @id @default(uuid())
+  id           String @id @default(uuid())
   nomeFantasia String
-  bairro       String
-  rua          String
-  numero       String
-  cep          String
+  documento    String @unique
   telefone     String
-  createdAt    DateTime @default(now())
+
+  estado String
+  rua    String
+  numero String
+  bairro String
+  cep    String
+
+  contatoNome  String
+  contatoCargo String
+
+  createdAt DateTime @default(now())
+}
+
+model Produto {
+  id        String   @id @default(uuid())
+  nome      String
+  createdAt DateTime @default(now())
+
+  embalagens Embalagem[]
+}
+
+model Embalagem {
+  id             String @id @default(uuid())
+  descricao      String
+  unidades       Int
+  pesoUnitarioKg Float
+
+  produtoId String
+  produto   Produto @relation(fields: [produtoId], references: [id])
+
+  createdAt     DateTime       @default(now())
+  itemRomaneios ItemRomaneio[]
+}
+
+model ItemRomaneio {
+  id         String @id @default(uuid())
+  quantidade Int
+
+  embalagemId String
+  embalagem   Embalagem @relation(fields: [embalagemId], references: [id])
+
+  romaneioId String
+
+  createdAt DateTime @default(now())
 }
 
 model Romaneio {
-  id               String   @id @default(uuid())
-  numero           String
-  data             DateTime
-  rota             String
-  dataAgendamento  DateTime
-  ticket           String?
-  numeroNF         String?
-  totalPeso        Float
+  id              String   @id @default(uuid())
+  numero          String
+  data            DateTime
+  rota            String
+  dataAgendamento DateTime
+  ticket          String?
+  numeroNF        String?
+  totalPeso       Float
 
-  veiculoId        String
-  motoristaId      String
+  veiculoId   String
+  motoristaId String
 
-  veiculo          Veiculo   @relation(fields: [veiculoId], references: [id])
-  motorista        Motorista @relation(fields: [motoristaId], references: [id])
+  veiculo   Veiculo   @relation(fields: [veiculoId], references: [id])
+  motorista Motorista @relation(fields: [motoristaId], references: [id])
 
-  produtos         ProdutoRomaneio[]
+  produtos ProdutoRomaneio[]
 
-  createdAt        DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model ProdutoRomaneio {
-  id            String  @id @default(uuid())
-  descricao     String
-  quantidade    Float
-  pesoUnitario  Float
-  pesoTotal     Float
+  id           String @id @default(uuid())
+  descricao    String
+  quantidade   Float
+  pesoUnitario Float
+  pesoTotal    Float
 
-  romaneioId    String
-  romaneio      Romaneio @relation(fields: [romaneioId], references: [id])
+  romaneioId String
+  romaneio   Romaneio @relation(fields: [romaneioId], references: [id])
 }
