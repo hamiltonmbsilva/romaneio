@@ -10,6 +10,7 @@ import { EmbalagemModule } from './modules/embalagem/embalagem.module';
 import { RomaneioModule } from './modules/romaneio/romaneio.module';
 import { EntregaModule } from './modules/entrega/entrega.module';
 
+
 @Module({
   imports: [PrismaModule,VeiculoModule, MotoristaModule, ClienteModule, ProdutoModule, EmbalagemModule, RomaneioModule, EntregaModule],
   controllers: [AppController],
