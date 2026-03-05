@@ -9,10 +9,11 @@ import { ProdutoModule } from './modules/produto/produto.module';
 import { EmbalagemModule } from './modules/embalagem/embalagem.module';
 import { RomaneioModule } from './modules/romaneio/romaneio.module';
 import { EntregaModule } from './modules/entrega/entrega.module';
+import { ItemEntregaModule } from './modules/item-entrega/item-entrega.module';
 
 
 @Module({
-  imports: [PrismaModule,VeiculoModule, MotoristaModule, ClienteModule, ProdutoModule, EmbalagemModule, RomaneioModule, EntregaModule],
+  imports: [PrismaModule,VeiculoModule, MotoristaModule, ClienteModule, ProdutoModule, EmbalagemModule, RomaneioModule, EntregaModule, ItemEntregaModule],
   controllers: [AppController],
   providers: [AppService],
 })

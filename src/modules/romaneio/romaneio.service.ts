@@ -46,4 +46,54 @@ export class RomaneioService {
       where: { id }
     })
   }
+
+  async calcularPesoRomaneio(romaneioId: string) {
+
+  const itens = await this.prisma.itemEntrega.findMany({
+    where: {
+      entrega: {
+        romaneioId
+      }
+    },
+    include: {
+      embalagem: true
+    }
+  })
+
+  let pesoTotal = 0
+
+  for (const item of itens) {
+
+    const pesoItem = item.embalagem.pesoKg * item.quantidade
+
+    pesoTotal += pesoItem
+
+  }
+
+  return pesoTotal
+}
+
+
+async ocupacaoVeiculo(romaneioId: string) {
+
+  const romaneio = await this.prisma.romaneio.findUnique({
+    where: { id: romaneioId },
+    include: {
+      veiculo: true
+    }
+  })
+
+  const pesoTotal = await this.calcularPesoRomaneio(romaneioId)
+
+  const capacidade = romaneio.veiculo.capacidadeKg
+
+  const ocupacao = (pesoTotal / capacidade) * 100
+
+  return {
+    pesoTotal,
+    capacidade,
+    ocupacao
+  }
+}
+
 }
