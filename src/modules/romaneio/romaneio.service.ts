@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../../shared/prisma/prisma.service'
 import { CreateRomaneioDTO } from './dto/create-romaneio.dto'
+import { NotFoundException } from '@nestjs/common'
 
 @Injectable()
 export class RomaneioService {
@@ -64,7 +65,7 @@ export class RomaneioService {
 
   for (const item of itens) {
 
-    const pesoItem = item.embalagem.pesoKg * item.quantidade
+    const pesoItem = item.embalagem.pesoUnitarioKg * item.quantidade
 
     pesoTotal += pesoItem
 
@@ -83,6 +84,10 @@ async ocupacaoVeiculo(romaneioId: string) {
     }
   })
 
+  if (!romaneio) {
+    throw new NotFoundException('Romaneio não encontrado')
+  }
+
   const pesoTotal = await this.calcularPesoRomaneio(romaneioId)
 
   const capacidade = romaneio.veiculo.capacidadeKg
@@ -94,6 +99,7 @@ async ocupacaoVeiculo(romaneioId: string) {
     capacidade,
     ocupacao
   }
+
 }
 
 }
