@@ -15,6 +15,7 @@ model Veiculo {
   kmInicial    Float
   kmFinal      Float?
   capacidadeKg Float
+  ativo         Boolean @default(true)
   romaneios    Romaneio[]
   createdAt    DateTime   @default(now())
 }

@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsOptional } from 'class-validator'
+import { IsString, IsNumber, IsOptional, IsBoolean } from 'class-validator'
 
 export class UpdateVeiculoDTO {
   @IsOptional()
@@ -20,4 +20,8 @@ export class UpdateVeiculoDTO {
   @IsOptional()
   @IsNumber()
   capacidadeKg?: number
+
+  @IsOptional()
+  @IsBoolean()
+  ativo?: boolean
 }

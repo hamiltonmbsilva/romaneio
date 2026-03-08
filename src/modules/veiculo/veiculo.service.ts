@@ -51,4 +51,17 @@ export class VeiculoService {
       where: { id },
     })
   }
+
+  async alterarStatus(id: string) {
+
+    const veiculo = await this.findOne(id)
+
+    return this.prisma.veiculo.update({
+      where:{ id },
+      data:{
+        ativo: !veiculo.ativo
+      }
+    })
+
+  }
 }

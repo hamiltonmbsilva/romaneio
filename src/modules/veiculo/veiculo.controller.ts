@@ -42,4 +42,9 @@ export class VeiculoController {
   remove(@Param('id') id: string) {
     return this.veiculoService.remove(id)
   }
+
+  @Put(':id/status')
+  alterarStatus(@Param('id') id:string){
+    return this.veiculoService.alterarStatus(id)
+  }
 }
