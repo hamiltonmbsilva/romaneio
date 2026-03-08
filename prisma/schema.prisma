@@ -15,8 +15,9 @@ model Veiculo {
   kmInicial    Float
   kmFinal      Float?
   capacidadeKg Float
-  ativo         Boolean @default(true)
+  ativo        Boolean @default(true)
   romaneios    Romaneio[]
+  kmHistorico  VeiculoKm[]
   createdAt    DateTime   @default(now())
 }
 
@@ -153,4 +154,20 @@ model ItemEntrega {
   embalagem   Embalagem @relation(fields: [embalagemId], references: [id])
 
   quantidade Int
+}
+
+model VeiculoKm {
+
+  id         String   @id @default(uuid())
+
+  veiculoId  String
+  veiculo    Veiculo  @relation(fields: [veiculoId], references: [id])
+
+  kmSaida    Int
+  kmRetorno  Int?
+  kmRodado   Int?
+
+  dataSaida  DateTime @default(now())
+  dataRetorno DateTime?
+
 }
