@@ -21,6 +21,22 @@ model Veiculo {
   createdAt    DateTime   @default(now())
 }
 
+model VeiculoKm {
+
+  id         String   @id @default(uuid())
+
+  veiculoId  String
+  veiculo    Veiculo  @relation(fields: [veiculoId], references: [id])
+
+  kmSaida    Int
+  kmRetorno  Int?
+  kmRodado   Int?
+
+  dataSaida  DateTime @default(now())
+  dataRetorno DateTime?
+}
+
+
 model Motorista {
   id        String     @id @default(uuid())
   nome      String
@@ -156,18 +172,3 @@ model ItemEntrega {
   quantidade Int
 }
 
-model VeiculoKm {
-
-  id         String   @id @default(uuid())
-
-  veiculoId  String
-  veiculo    Veiculo  @relation(fields: [veiculoId], references: [id])
-
-  kmSaida    Int
-  kmRetorno  Int?
-  kmRodado   Int?
-
-  dataSaida  DateTime @default(now())
-  dataRetorno DateTime?
-
-}

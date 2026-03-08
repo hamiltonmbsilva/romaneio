@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common"
 import { PrismaService } from "src/shared/prisma/prisma.service"
 import { NotFoundException } from "@nestjs/common"
+import { BadRequestException } from '@nestjs/common'
 
 @Injectable()
 export class VeiculoKmService{
@@ -8,9 +9,9 @@ export class VeiculoKmService{
  constructor(private prisma:PrismaService){}
 
  async registrarSaida(veiculoId:string,kmSaida:number){
+    console.log(veiculoId,kmSaida)
 
    return this.prisma.veiculoKm.create({
-
      data:{
        veiculoId,
        kmSaida
