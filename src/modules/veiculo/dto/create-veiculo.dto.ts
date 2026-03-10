@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsNotEmpty, IsBoolean } from 'class-validator'
+import { IsString, IsNumber, IsNotEmpty, IsBoolean, IsOptional } from 'class-validator'
 
 export class CreateVeiculoDTO {
   @IsString()
@@ -19,5 +19,6 @@ export class CreateVeiculoDTO {
   capacidadeKg: number
 
   @IsBoolean()
-  ativo: boolean
+  @IsOptional()
+  ativo?: boolean
 }
