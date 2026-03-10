@@ -65,4 +65,16 @@ export class VeiculoKmService{
 
  }
 
+ async atualizarKm(id:string,data:any){
+
+  return this.prisma.veiculoKm.update({
+    where:{ id },
+    data:{
+      kmSaida:data.kmSaida,
+      kmRetorno:data.kmRetorno
+    }
+  })
+
+}
+
 }

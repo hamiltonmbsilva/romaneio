@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, Body } from "@nestjs/common"
+import { Controller, Post, Get, Param, Body, Patch } from "@nestjs/common"
 import { VeiculoKmService } from "./veiculo-km.service"
 
 @Controller("veiculo-km")
@@ -26,5 +26,13 @@ export class VeiculoKmController{
   return this.service.listarPorVeiculo(veiculoId)
 
  }
+
+ @Patch(':id')
+    async atualizarKm(
+    @Param('id') id:string,
+    @Body() body:any
+    ){
+    return this.service.atualizarKm(id,body)
+}
 
 }
