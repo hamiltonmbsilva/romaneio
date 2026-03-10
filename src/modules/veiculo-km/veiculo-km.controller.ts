@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, Body, Patch } from "@nestjs/common"
+import { Controller, Post, Get, Param, Body, Patch, Put } from "@nestjs/common"
 import { VeiculoKmService } from "./veiculo-km.service"
 
 @Controller("veiculo-km")
@@ -13,12 +13,13 @@ export class VeiculoKmController{
 
  }
 
- @Post("retorno")
- registrarRetorno(@Body() body:any){
-
-  return this.service.registrarRetorno(body.id, body.kmRetorno)
-
- }
+ @Put("retorno/:id")
+    registrarRetorno(
+    @Param("id") id: string,
+    @Body() body: { kmRetorno:number }
+    ){
+    return this.service.registrarRetorno(id, body.kmRetorno)
+    }
 
  @Get(":veiculoId")
  listar(@Param("veiculoId") veiculoId:string){
