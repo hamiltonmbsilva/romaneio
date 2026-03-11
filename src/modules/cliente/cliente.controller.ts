@@ -1,48 +1,51 @@
 import {
-  Controller,
-  Post,
-  Get,
-  Put,
-  Delete,
-  Param,
-  Body
-} from '@nestjs/common'
+ Controller,
+ Get,
+ Post,
+ Patch,
+ Delete,
+ Param,
+ Body,
+ Query
+} from "@nestjs/common"
 
-import { ClienteService } from './cliente.service'
+import { ClienteService } from "./cliente.service"
+import { CreateClienteDTO } from "./dto/create-cliente.dto"
+import { UpdateClienteDTO } from "./dto/update-cliente.dto"
 
-import { CreateClienteDTO } from './dto/create-cliente.dto'
-import { UpdateClienteDTO } from './dto/update-cliente.dto'
 
-@Controller('cliente')
-export class ClienteController {
+@Controller("cliente")
+export class ClienteController{
 
-  constructor(private clienteService: ClienteService) {}
+ constructor(private service:ClienteService){}
 
-  @Post()
-  create(@Body() body: CreateClienteDTO) {
-    return this.clienteService.create(body)
-  }
+ @Post()
+ criar(@Body() dto:CreateClienteDTO){
+  return this.service.criar(dto)
+ }
 
-  @Get()
-  findAll() {
-    return this.clienteService.findAll()
-  }
+ @Get()
+    listar(
+        @Query("page") page:string,
+        @Query("search") search?:string
+    ){
+        return this.service.listar(
+        Number(page) || 1,
+        search
+        )
+    }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.clienteService.findOne(id)
-  }
+ @Patch(":id")
+ atualizar(
+  @Param("id") id:string,
+  @Body() dto:UpdateClienteDTO
+ ){
+  return this.service.atualizar(id,dto)
+ }
 
-  @Put(':id')
-  update(
-    @Param('id') id: string,
-    @Body() body: UpdateClienteDTO
-  ) {
-    return this.clienteService.update(id, body)
-  }
+ @Delete(":id")
+ deletar(@Param("id") id:string){
+  return this.service.deletar(id)
+ }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.clienteService.remove(id)
-  }
 }

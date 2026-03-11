@@ -49,18 +49,16 @@ model Motorista {
 
 model Cliente {
   id           String @id @default(uuid())
-  nomeFantasia String
-  documento    String @unique
-  telefone     String
-
-  estado String
-  rua    String
-  numero String
-  bairro String
-  cep    String
-
-  contatoNome  String
-  contatoCargo String
+  ativo             Boolean
+  nomeFantasia      String
+  telefone          String?
+  contato           String?
+  email             String?
+  cidade            String
+  estado            String
+  endereco          String
+  cep               String
+  inscricaoEstadual String?
 
   entregas Entrega[]
 

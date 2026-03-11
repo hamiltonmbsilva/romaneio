@@ -1,70 +1,85 @@
-import {
-  Injectable,
-  BadRequestException,
-  NotFoundException
-} from '@nestjs/common'
-
-import { PrismaService } from 'src/shared/prisma/prisma.service'
-
-import { CreateClienteDTO } from './dto/create-cliente.dto'
-import { UpdateClienteDTO } from './dto/update-cliente.dto'
+import { Injectable } from "@nestjs/common"
+import { PrismaService } from "src/shared/prisma/prisma.service"
+import { CreateClienteDTO } from "./dto/create-cliente.dto"
+import { UpdateClienteDTO } from "./dto/update-cliente.dto"
 
 @Injectable()
-export class ClienteService {
+export class ClienteService{
 
-  constructor(private prisma: PrismaService) {}
+ constructor(private prisma:PrismaService){}
 
-  async create(data: CreateClienteDTO) {
+ async criar(dto: CreateClienteDTO){
 
-    try {
+ return this.prisma.cliente.create({
 
-      return await this.prisma.cliente.create({
-        data
-      })
+  data:{
 
-    } catch (error) {
+   ativo: dto.ativo,
 
-      if (error.code === 'P2002') {
-        throw new BadRequestException('Documento já cadastrado')
-      }
+   nomeFantasia: dto.nomeFantasia,
 
-      throw error
-    }
+   telefone: dto.telefone ?? null,
+
+   contato: dto.contato ?? null,
+
+   email: dto.email ?? null,
+
+   cidade: dto.cidade,
+
+   estado: dto.estado,
+
+   endereco: dto.endereco ?? "",
+
+   cep: dto.cep ?? "",
+
+   inscricaoEstadual: dto.inscricaoEstadual ?? ""
+
   }
 
-  async findAll() {
-    return this.prisma.cliente.findMany()
+ })
+
+}
+
+async listar(page:number,search?:string){
+
+ const limit = 10
+ const skip = (page - 1) * limit
+
+ return this.prisma.cliente.findMany({
+
+  where:{
+   nomeFantasia:{
+    contains:search,
+    mode:"insensitive"
+   }
+  },
+
+  skip,
+  take:limit,
+
+  orderBy:{
+   nomeFantasia:"asc"
   }
 
-  async findOne(id: string) {
+ })
 
-    const cliente = await this.prisma.cliente.findUnique({
-      where: { id }
-    })
+}
 
-    if (!cliente) {
-      throw new NotFoundException('Cliente não encontrado')
-    }
+ async atualizar(id:string,dto:UpdateClienteDTO){
 
-    return cliente
-  }
+  return this.prisma.cliente.update({
+    where:{id},
+    data:dto
+  })
 
-  async update(id: string, data: UpdateClienteDTO) {
+ }
 
-    await this.findOne(id)
+ async deletar(id:string){
 
-    return this.prisma.cliente.update({
-      where: { id },
-      data
-    })
-  }
+  return this.prisma.cliente.delete({
+    where:{id}
+  })
 
-  async remove(id: string) {
+ }
 
-    await this.findOne(id)
-
-    return this.prisma.cliente.delete({
-      where: { id }
-    })
-  }
 }

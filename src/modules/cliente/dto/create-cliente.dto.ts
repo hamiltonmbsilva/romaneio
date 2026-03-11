@@ -6,37 +6,24 @@ import {
 
 export class CreateClienteDTO {
 
-  @IsString()
-  @IsNotEmpty()
+  ativo: boolean
+
   nomeFantasia: string
 
-  @IsString()
-  @Matches(/^\d{11}|\d{14}$/, {
-    message: 'Documento deve ser CPF (11) ou CNPJ (14)'
-  })
-  documento: string
+  telefone?: string
 
-  @IsString()
-  telefone: string
+  contato?: string
 
-  @IsString()
-  rua: string
+  email?: string
 
-  @IsString()
-  numero: string
+  cidade: string
 
-  @IsString()
-  bairro: string
-
-  @Matches(/^\d{8}$/,{ message: 'CEP inválido'})
-  cep: string
-
-  @IsString()
   estado: string
 
-  @IsString()
-  contatoNome: string
+  endereco?: string
 
-  @IsString()
-  contatoCargo: string
+  cep?: string
+
+  inscricaoEstadual?: string
+
 }
