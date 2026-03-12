@@ -8,42 +8,46 @@ export class ClienteService{
 
  constructor(private prisma:PrismaService){}
 
+
  async criar(dto: CreateClienteDTO){
 
  return this.prisma.cliente.create({
-
   data:{
-
-   ativo: dto.ativo,
-
-   nomeFantasia: dto.nomeFantasia,
-
-   telefone: dto.telefone ?? null,
-
-   contato: dto.contato ?? null,
-
-   email: dto.email ?? null,
-
-   cidade: dto.cidade,
-
-   estado: dto.estado,
-
+   nomeFantasia: dto.nomeFantasia ?? "",
+   telefone: dto.telefone ?? "",
+   contato: dto.contato ?? "",
+   email: dto.email ?? "",
+   cidade: dto.cidade ?? "",
+   estado: dto.estado ?? "",
    endereco: dto.endereco ?? "",
-
    cep: dto.cep ?? "",
-
-   inscricaoEstadual: dto.inscricaoEstadual ?? ""
-
+   inscricaoEstadual: dto.inscricaoEstadual ?? "",
+   ativo: true
   }
-
  })
 
 }
 
-async listar(page:number,search?:string){
+async atualizar(id:string,dto:UpdateClienteDTO){
+
+   console.log("Service recebeu:", id)
+    console.log("Dados:", dto)
+
+ return this.prisma.cliente.update({
+  where:{ id },
+  data:{
+   ...dto
+  }
+ })
+
+}
+
+
+async listar(page:number,search?:string,cidade?:string,estado?:string){
 
  const limit = 10
- const skip = (page - 1) * limit
+
+ const skip = (page-1)*limit
 
  return this.prisma.cliente.findMany({
 
@@ -51,28 +55,28 @@ async listar(page:number,search?:string){
    nomeFantasia:{
     contains:search,
     mode:"insensitive"
+   },
+
+   cidade:{
+    contains:cidade,
+    mode:"insensitive"
+   },
+
+   estado:{
+    contains:estado,
+    mode:"insensitive"
    }
+
   },
 
   skip,
   take:limit,
 
-  orderBy:{
-   nomeFantasia:"asc"
-  }
-
  })
 
 }
 
- async atualizar(id:string,dto:UpdateClienteDTO){
-
-  return this.prisma.cliente.update({
-    where:{id},
-    data:dto
-  })
-
- }
+ 
 
  async deletar(id:string){
 
@@ -81,5 +85,15 @@ async listar(page:number,search?:string){
   })
 
  }
+
+ async buscar(id:string){
+
+ return this.prisma.cliente.findUnique({
+  where:{id}
+ })
+
+}
+
+ 
 
 }

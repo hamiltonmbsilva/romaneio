@@ -50,14 +50,14 @@ model Motorista {
 model Cliente {
   id           String @id @default(uuid())
   ativo             Boolean
-  nomeFantasia      String
+  nomeFantasia      String?
   telefone          String?
   contato           String?
   email             String?
-  cidade            String
-  estado            String
-  endereco          String
-  cep               String
+  cidade            String?
+  estado            String?
+  endereco          String?
+  cep               String?
   inscricaoEstadual String?
 
   entregas Entrega[]

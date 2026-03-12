@@ -20,9 +20,9 @@ export class ClienteController{
  constructor(private service:ClienteService){}
 
  @Post()
- criar(@Body() dto:CreateClienteDTO){
-  return this.service.criar(dto)
- }
+    criar(@Body() dto: CreateClienteDTO){
+        return this.service.criar(dto)
+    }
 
  @Get()
     listar(
@@ -35,13 +35,23 @@ export class ClienteController{
         )
     }
 
- @Patch(":id")
- atualizar(
-  @Param("id") id:string,
-  @Body() dto:UpdateClienteDTO
- ){
-  return this.service.atualizar(id,dto)
+    
+
+ @Patch(":id") 
+    atualizar(
+        @Param("id") id:string,
+        @Body() dto:UpdateClienteDTO
+        ){
+            console.log("ID recebido:", id)
+            console.log("DTO recebido:", dto)
+            
+    return this.service.atualizar(id,dto)
  }
+
+ @Get(":id")
+    buscar(@Param("id") id:string){
+    return this.service.buscar(id)
+    }
 
  @Delete(":id")
  deletar(@Param("id") id:string){
