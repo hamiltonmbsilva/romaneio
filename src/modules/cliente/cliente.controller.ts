@@ -55,6 +55,8 @@ export class ClienteController{
 
  @Delete(":id")
  deletar(@Param("id") id:string){
+
+    console.log("Deletar controller:", id)
   return this.service.deletar(id)
  }
 

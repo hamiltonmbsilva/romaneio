@@ -28,10 +28,7 @@ export class ClienteService{
 
 }
 
-async atualizar(id:string,dto:UpdateClienteDTO){
-
-   console.log("Service recebeu:", id)
-    console.log("Dados:", dto)
+async atualizar(id:string,dto:UpdateClienteDTO){   
 
  return this.prisma.cliente.update({
   where:{ id },
@@ -46,39 +43,51 @@ async atualizar(id:string,dto:UpdateClienteDTO){
 async listar(page:number,search?:string,cidade?:string,estado?:string){
 
  const limit = 10
-
  const skip = (page-1)*limit
 
- return this.prisma.cliente.findMany({
+ const where:any = {}
 
-  where:{
-   nomeFantasia:{
-    contains:search,
-    mode:"insensitive"
-   },
+ if(search){
+  where.nomeFantasia = {
+   contains: search,
+   mode: "insensitive"
+  }
+ }
 
-   cidade:{
-    contains:cidade,
-    mode:"insensitive"
-   },
+ if(cidade){
+  where.cidade = {
+   contains: cidade,
+   mode: "insensitive"
+  }
+ }
 
-   estado:{
-    contains:estado,
-    mode:"insensitive"
-   }
+ if(estado){
+  where.estado = {
+   contains: estado,
+   mode: "insensitive"
+  }
+ }
 
-  },
+ const [clientes,total] = await this.prisma.$transaction([
+  this.prisma.cliente.findMany({
+   where,
+   skip,
+   take:limit
+  }),
+  this.prisma.cliente.count({where})
+ ])
 
-  skip,
-  take:limit,
-
- })
-
+ return {
+  data:clientes,
+  total
+ }
 }
 
  
 
  async deletar(id:string){
+
+  console.log("Service Delete:", id)    
 
   return this.prisma.cliente.delete({
     where:{id}

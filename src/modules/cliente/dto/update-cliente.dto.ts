@@ -1,23 +1,45 @@
+import { IsOptional, IsString, IsBoolean } from "class-validator"
+
 export class UpdateClienteDTO {
 
-  ativo?: boolean
+ @IsOptional()
+ @IsBoolean()
+ ativo?: boolean
 
-  nomeFantasia?: string
+ @IsOptional()
+ @IsString()
+ nomeFantasia?: string
 
-  telefone?: string
+ @IsOptional()
+ @IsString()
+ telefone?: string
 
-  contato?: string
+ @IsOptional()
+ @IsString()
+ contato?: string
 
-  email?: string
+ @IsOptional()
+ @IsString()
+ email?: string
 
-  cidade?: string
+ @IsOptional()
+ @IsString()
+ cidade?: string
 
-  estado?: string
+ @IsOptional()
+ @IsString()
+ estado?: string
 
-  endereco?: string
+ @IsOptional()
+ @IsString()
+ endereco?: string
 
-  cep?: string
+ @IsOptional()
+ @IsString()
+ cep?: string
 
-  inscricaoEstadual?: string
+ @IsOptional()
+ @IsString()
+ inscricaoEstadual?: string
 
 }
