@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common"
 import { PrismaService } from "src/shared/prisma/prisma.service"
 import { CreateClienteDTO } from "./dto/create-cliente.dto"
 import { UpdateClienteDTO } from "./dto/update-cliente.dto"
+import { geocodeEndereco } from "src/shared/services/geocode.service"
 
 @Injectable()
 export class ClienteService{
@@ -10,6 +11,10 @@ export class ClienteService{
 
 
  async criar(dto: CreateClienteDTO){
+
+ const enderecoCompleto = `${dto.endereco}, ${dto.cidade}, ${dto.estado}`
+
+ const coords = await geocodeEndereco(enderecoCompleto)
 
  return this.prisma.cliente.create({
   data:{
@@ -22,6 +27,10 @@ export class ClienteService{
    endereco: dto.endereco ?? "",
    cep: dto.cep ?? "",
    inscricaoEstadual: dto.inscricaoEstadual ?? "",
+
+   latitude: coords?.latitude,
+   longitude: coords?.longitude,
+   
    ativo: true
   }
  })

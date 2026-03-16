@@ -60,6 +60,9 @@ model Cliente {
   cep               String?
   inscricaoEstadual String?
 
+  latitude          Float?
+  longitude         Float?
+
   entregas Entrega[]
 
   createdAt     DateTime       @default(now())
