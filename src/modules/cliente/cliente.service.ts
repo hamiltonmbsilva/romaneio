@@ -61,12 +61,6 @@ async listar(page:number,search?:string,cidade?:string,estado?:string){
   }
  }
 
- if(estado){
-  where.estado = {
-   contains: estado,
-   mode: "insensitive"
-  }
- }
 
  const [clientes,total] = await this.prisma.$transaction([
   this.prisma.cliente.findMany({
@@ -85,9 +79,7 @@ async listar(page:number,search?:string,cidade?:string,estado?:string){
 
  
 
- async deletar(id:string){
-
-  console.log("Service Delete:", id)    
+ async deletar(id:string){   
 
   return this.prisma.cliente.delete({
     where:{id}

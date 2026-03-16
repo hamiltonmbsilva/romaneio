@@ -27,11 +27,12 @@ export class ClienteController{
  @Get()
     listar(
         @Query("page") page:string,
-        @Query("search") search?:string
+        @Query("search") search?:string,
+        @Query("cidade") cidade?:string
     ){
         return this.service.listar(
         Number(page) || 1,
-        search
+        search,cidade
         )
     }
 
