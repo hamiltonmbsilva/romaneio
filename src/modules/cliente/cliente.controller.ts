@@ -54,6 +54,12 @@ export class ClienteController{
     return this.service.buscar(id)
     }
 
+  @Get("mapa")
+   listarMapa(){
+   return this.service.listarMapa()
+
+   }
+
  @Delete(":id")
  deletar(@Param("id") id:string){
 

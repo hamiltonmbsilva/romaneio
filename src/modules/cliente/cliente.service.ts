@@ -30,7 +30,7 @@ export class ClienteService{
 
    latitude: coords?.latitude,
    longitude: coords?.longitude,
-   
+
    ativo: true
   }
  })
@@ -84,6 +84,41 @@ async listar(page:number,search?:string,cidade?:string,estado?:string){
   data:clientes,
   total
  }
+}
+
+
+// async listarMapa(){
+
+//  return this.prisma.cliente.findMany({
+
+//   where:{
+//    latitude:{ not:null },
+//    longitude:{ not:null },
+//    ativo:true
+//   },
+
+//   select:{
+//    id:true,
+//    nomeFantasia:true,
+//    latitude:true,
+//    longitude:true
+//   }
+
+//  })
+
+// }
+
+async listarMapa(){
+
+ return this.prisma.cliente.findMany({
+  select:{
+   id:true,
+   nomeFantasia:true,
+   latitude:true,
+   longitude:true
+  }
+ })
+
 }
 
  
