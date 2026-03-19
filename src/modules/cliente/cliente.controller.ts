@@ -36,6 +36,12 @@ export class ClienteController{
         )
     }
 
+ @Get("mapa")
+        listarMapa(){
+        console.log("🔥 BATEU NO ENDPOINT MAPA")
+        return this.service.listarMapa()
+        }
+
     
 
  @Patch(":id") 
@@ -53,13 +59,6 @@ export class ClienteController{
     buscar(@Param("id") id:string){
     return this.service.buscar(id)
     }
-
-  @Get("mapa")
-   listarMapa(){
-    console.log("🔥 BATEU NO ENDPOINT MAPA")
-   return this.service.listarMapa()
-
-   }
 
  @Delete(":id")
  deletar(@Param("id") id:string){
