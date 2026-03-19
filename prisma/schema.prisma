@@ -58,6 +58,7 @@ model Cliente {
   estado            String?
   endereco          String?
   cep               String?
+  bairro            String?
   inscricaoEstadual String?
 
   latitude          Float?

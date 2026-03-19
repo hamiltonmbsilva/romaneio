@@ -1,11 +1,17 @@
+import { IsString, IsNumber } from "class-validator"
+
 export class ClienteMapaDTO {
 
+ @IsString()
  id: string
 
+ @IsString()
  nomeFantasia: string
 
- latitude: number | null
+ @IsNumber()
+ latitude: number
 
- longitude: number | null
+ @IsNumber()
+ longitude: number
 
 }

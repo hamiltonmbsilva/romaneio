@@ -86,31 +86,38 @@ async listar(page:number,search?:string,cidade?:string,estado?:string){
  }
 }
 
+// async listarMapa(){
+//  return this.prisma.cliente.findMany({
+//   take: 10
+//  })
+// }
 
 // async listarMapa(){
 
 //  return this.prisma.cliente.findMany({
-
 //   where:{
 //    latitude:{ not:null },
 //    longitude:{ not:null },
 //    ativo:true
 //   },
-
 //   select:{
 //    id:true,
 //    nomeFantasia:true,
 //    latitude:true,
 //    longitude:true
 //   }
-
 //  })
 
 // }
 
 async listarMapa(){
 
- return this.prisma.cliente.findMany({
+ const clientes = await this.prisma.cliente.findMany({
+  where:{
+   latitude:{ not:null },
+   longitude:{ not:null },
+   ativo:true
+  },
   select:{
    id:true,
    nomeFantasia:true,
@@ -119,7 +126,22 @@ async listarMapa(){
   }
  })
 
+ console.log("CLIENTES MAPA:", clientes)
+
+ return clientes
 }
+// async listarMapa(){
+
+//  return this.prisma.cliente.findMany({
+//   select:{
+//    id:true,
+//    nomeFantasia:true,
+//    latitude:true,
+//    longitude:true
+//   }
+//  })
+
+// }
 
  
 

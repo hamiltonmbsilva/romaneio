@@ -56,6 +56,7 @@ export class ClienteController{
 
   @Get("mapa")
    listarMapa(){
+    console.log("🔥 BATEU NO ENDPOINT MAPA")
    return this.service.listarMapa()
 
    }

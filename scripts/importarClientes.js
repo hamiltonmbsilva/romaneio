@@ -5,7 +5,7 @@ const prisma = new PrismaClient()
 
 async function importar(){
 
- const arquivo = fs.readFileSync("clientes.csv","utf8")
+ const arquivo = fs.readFileSync("clientes.csv","latin1")
 
  const linhas = arquivo.split("\n")
 
@@ -37,7 +37,9 @@ async function importar(){
 
    cep: colunas[8] || "Não informado",
 
-   inscricaoEstadual: colunas[9] || "Não informado"
+   bairro: colunas[9] || "Não informado",
+
+   inscricaoEstadual: colunas[10] || null
   }
 
   await prisma.cliente.create({ data: cliente })
