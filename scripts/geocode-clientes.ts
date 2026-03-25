@@ -90,3 +90,7 @@ async function atualizarClientes() {
 
  console.log("🚀 Finalizado")
 }
+
+atualizarClientes()
+  .catch(console.error)
+  .finally(() => prisma.$disconnect())

@@ -42,4 +42,8 @@ export class UpdateClienteDTO {
  @IsString()
  inscricaoEstadual?: string
 
+ @IsOptional()
+ @IsString()
+  bairro?: string 
+
 }

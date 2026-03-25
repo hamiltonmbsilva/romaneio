@@ -8,7 +8,7 @@ export class CreateClienteDTO {
 
   ativo: boolean
 
-  nomeFantasia: string
+  nomeFantasia?: string
 
   telefone?: string
 
@@ -16,11 +16,13 @@ export class CreateClienteDTO {
 
   email?: string
 
-  cidade: string
+  cidade?: string
 
-  estado: string
+  estado?: string
 
   endereco?: string
+
+  bairro?: string
 
   cep?: string
 

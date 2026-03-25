@@ -40,9 +40,13 @@ export class ClienteController{
         listarMapa(){
         console.log("🔥 BATEU NO ENDPOINT MAPA")
         return this.service.listarMapa()
-        }
+      }
 
-    
+    @Patch(":id/geocode")
+      async gerarCoordenadas(@Param("id") id: string) {
+      console.log("🔥 ENTROU NO BACK:", id)
+      return this.service.gerarCoordenadas(id)
+      }
 
  @Patch(":id") 
     atualizar(
@@ -66,5 +70,7 @@ export class ClienteController{
     console.log("Deletar controller:", id)
   return this.service.deletar(id)
  }
+
+ 
 
 }

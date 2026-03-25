@@ -25,6 +25,7 @@ export class ClienteService{
    cidade: dto.cidade ?? "",
    estado: dto.estado ?? "",
    endereco: dto.endereco ?? "",
+   bairro: dto.bairro ?? "",
    cep: dto.cep ?? "",
    inscricaoEstadual: dto.inscricaoEstadual ?? "",
 
@@ -37,15 +38,90 @@ export class ClienteService{
 
 }
 
-async atualizar(id:string,dto:UpdateClienteDTO){   
+async atualizar(id: string, dto: UpdateClienteDTO) {
 
- return this.prisma.cliente.update({
-  where:{ id },
-  data:{
-   ...dto
-  }
+ const clienteAtual = await this.prisma.cliente.findUnique({
+  where: { id }
  })
 
+ let latitude = clienteAtual?.latitude
+ let longitude = clienteAtual?.longitude
+
+ // 👉 SE NÃO TEM COORDENADA OU MUDOU ENDEREÇO
+ if (
+  !latitude ||
+  !longitude ||
+  dto.endereco ||
+  dto.cidade ||
+  dto.estado ||
+  dto.bairro ||
+  dto.cep
+ ) {
+
+  const enderecoCompleto = `
+   ${dto.endereco || clienteAtual?.endereco},
+   ${dto.bairro || clienteAtual?.bairro},
+   ${dto.cidade || clienteAtual?.cidade},
+   ${dto.estado || clienteAtual?.estado},
+   ${dto.cep || clienteAtual?.cep},
+   Brasil
+  `
+   .replace(/\s+/g, " ")
+   .trim()
+
+  const coords = await geocodeEndereco(enderecoCompleto)
+
+  if (coords) {
+   latitude = coords.latitude
+   longitude = coords.longitude
+  }
+ }
+
+ 
+
+ return this.prisma.cliente.update({
+  where: { id },
+  data: {
+   ...dto,
+   latitude,
+   longitude
+  }
+ })
+}
+
+
+async gerarCoordenadas(id: string) {
+
+ const cliente = await this.prisma.cliente.findUnique({
+  where: { id }
+ })
+
+ console.log("Serviço",id)
+
+ const enderecoCompleto = `
+  ${cliente?.endereco},
+  ${cliente?.bairro},
+  ${cliente?.cidade},
+  ${cliente?.estado},
+  ${cliente?.cep},
+  Brasil
+ `
+  .replace(/\s+/g, " ")
+  .trim()
+
+ const coords = await geocodeEndereco(enderecoCompleto)
+
+ if (!coords) {
+  throw new Error("Não foi possível gerar coordenadas")
+ }
+
+ return this.prisma.cliente.update({
+  where: { id },
+  data: {
+   latitude: coords.latitude,
+   longitude: coords.longitude
+  }
+ })
 }
 
 
