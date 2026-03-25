@@ -106,14 +106,22 @@ async gerarCoordenadas(id: string) {
   ${cliente?.cep},
   Brasil
  `
+  .replace(/\n/g, " ")
   .replace(/\s+/g, " ")
+  .replace(/,+/g, ",") // remove vírgulas duplicadas
+  .replace(", ,", ",") // remove vazio
   .trim()
 
  const coords = await geocodeEndereco(enderecoCompleto)
 
  if (!coords) {
-  throw new Error("Não foi possível gerar coordenadas")
- }
+  console.log("❌ Não encontrou coordenadas para:", enderecoCompleto)
+
+  return {
+    message: "Endereço não encontrado",
+    sucesso: false
+  }
+}
 
  return this.prisma.cliente.update({
   where: { id },
