@@ -10,9 +10,26 @@ export class RomaneioService {
 
   async create(data: CreateRomaneioDTO) {
     return this.prisma.romaneio.create({
-      data
-    })
+    data: {
+      motoristaId: data.motoristaId,
+      veiculoId: data.veiculoId,
+      dataSaida: new Date(data.dataSaida),
+      status: "ABERTO"
+    }
+  })
   }
+
+  async listar() {
+  return this.prisma.romaneio.findMany({
+    include: {
+      motorista: true,
+      veiculo: true
+    },
+    orderBy: {
+      createdAt: "desc"
+    }
+  })
+ }
 
   async findAll() {
     return this.prisma.romaneio.findMany({

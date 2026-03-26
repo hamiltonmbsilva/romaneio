@@ -8,13 +8,13 @@ export class RomaneioController {
   constructor(private readonly romaneioService: RomaneioService) {}
 
   @Post()
-  create(@Body() data: CreateRomaneioDTO) {
-    return this.romaneioService.create(data)
-  }
+    criar(@Body() dto: CreateRomaneioDTO) {
+      return this.romaneioService.create(dto)
+    }
 
   @Get()
-  findAll() {
-    return this.romaneioService.findAll()
+  listar() {
+    return this.romaneioService.listar()
   }
 
   @Get(':id')
