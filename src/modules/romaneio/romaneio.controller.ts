@@ -8,7 +8,8 @@ export class RomaneioController {
   constructor(private readonly romaneioService: RomaneioService) {}
 
   @Post()
-    criar(@Body() dto: CreateRomaneioDTO) {
+    create(@Body() dto: CreateRomaneioDTO) {
+      console.log("🔥 BATEU NO CREATE ROMANEIO", dto)
       return this.romaneioService.create(dto)
     }
 

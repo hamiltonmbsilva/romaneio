@@ -8,16 +8,29 @@ export class RomaneioService {
 
   constructor(private prisma: PrismaService) {}
 
-  async create(data: CreateRomaneioDTO) {
-    return this.prisma.romaneio.create({
+  async create(dto: CreateRomaneioDTO) {
+
+  console.log("DTO RECEBIDO:", dto)
+
+  if (!dto.motoristaId || !dto.veiculoId) {
+    throw new Error("Motorista e veículo são obrigatórios")
+  }
+
+  const data = dto.dataSaida ? new Date(dto.dataSaida) : new Date()
+
+  if (isNaN(data.getTime())) {
+    throw new Error("Data inválida")
+  }
+
+  return this.prisma.romaneio.create({
     data: {
-      motoristaId: data.motoristaId,
-      veiculoId: data.veiculoId,
-      dataSaida: new Date(data.dataSaida),
+      motoristaId: dto.motoristaId,
+      veiculoId: dto.veiculoId,
+      dataSaida: data,
       status: "ABERTO"
     }
   })
-  }
+}
 
   async listar() {
   return this.prisma.romaneio.findMany({

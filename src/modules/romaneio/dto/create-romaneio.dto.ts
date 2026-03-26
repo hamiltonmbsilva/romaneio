@@ -1,5 +1,16 @@
+import { IsString, IsNotEmpty } from "class-validator"
+
 export class CreateRomaneioDTO {
+
+  @IsString()
+  @IsNotEmpty()
   motoristaId: string
+
+  @IsString()
+  @IsNotEmpty()
   veiculoId: string
-  dataSaida: Date
+
+  @IsString()
+  @IsNotEmpty()
+  dataSaida: string
 }
