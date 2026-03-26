@@ -2,21 +2,40 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { PrismaService } from 'src/shared/prisma/prisma.service'
 import { CreateMotoristaDTO } from './dto/create-motorista.dto'
 import { UpdateMotoristaDTO } from './dto/update-motorista.dto'
+import { Prisma } from '@prisma/client'
 
 @Injectable()
 export class MotoristaService {
   constructor(private prisma: PrismaService) {}
 
-  async create(data: CreateMotoristaDTO) {
+  async create(dto: CreateMotoristaDTO) {
+
     try {
-      return await this.prisma.motorista.create({ data })
-    } catch (error) {
-      if (error.code === 'P2002') {
-        throw new BadRequestException('CNH já cadastrada')
-      }
-      throw error
+
+      return this.prisma.motorista.create({
+        data: {
+          nome: dto.nome,
+          telefone: dto.telefone ?? "",
+          cnh: dto.cnh ?? "",
+          endereco: dto.endereco ?? "",
+          //ativo: true
+        }
+      })
+
+    } catch (error: any) {
+
+    // 🚨 ERRO DE CNH DUPLICADA
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      throw new BadRequestException("Já existe um motorista com essa CNH")
     }
-  }
+
+    throw error
+  }  
+
+}
 
   async findAll() {
     return this.prisma.motorista.findMany()

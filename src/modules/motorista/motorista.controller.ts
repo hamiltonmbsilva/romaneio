@@ -6,6 +6,7 @@ import {
   Delete,
   Param,
   Body,
+  Patch
 } from '@nestjs/common'
 import { MotoristaService } from './motorista.service'
 import { CreateMotoristaDTO } from './dto/create-motorista.dto'
@@ -17,6 +18,7 @@ export class MotoristaController {
 
   @Post()
   create(@Body() body: CreateMotoristaDTO) {
+    console.log("Bateu no controlher", body)
     return this.motoristaService.create(body)
   }
 
@@ -30,11 +32,9 @@ export class MotoristaController {
     return this.motoristaService.findOne(id)
   }
 
-  @Put(':id')
-  update(
-    @Param('id') id: string,
-    @Body() body: UpdateMotoristaDTO,
-  ) {
+  @Patch(":id")
+  atualizar(@Param("id") id: string, @Body() body: any) {
+    console.log("🔥 PATCH OK:", id)
     return this.motoristaService.update(id, body)
   }
 

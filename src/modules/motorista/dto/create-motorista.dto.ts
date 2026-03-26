@@ -1,15 +1,19 @@
-import { IsString } from 'class-validator'
+import { IsString, IsOptional, IsNotEmpty } from "class-validator"
 
 export class CreateMotoristaDTO {
+
   @IsString()
+  @IsNotEmpty({ message: "Nome é obrigatório" })
   nome: string
 
+  @IsOptional()
   @IsString()
-  cnh: string
+  telefone?: string
 
+  @IsOptional()
   @IsString()
-  endereco: string
-
+  cnh?: string
+  
   @IsString()
-  telefone: string
+  endereco?: string
 }
