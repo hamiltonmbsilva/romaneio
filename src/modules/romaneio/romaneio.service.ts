@@ -29,19 +29,19 @@ export class RomaneioService {
   } 
   
 
-  return this.prisma.romaneio.create({
+  return this.prisma.romaneio.create({  
     data: {
-
       numero, 
-      rota: dto.rota ?? null, 
-      
+      rota: dto.rota ?? null,       
       motoristaId: dto.motoristaId,
       veiculoId: dto.veiculoId,
-      dataSaida: data,
+      dataSaida: new Date(data),
       status: "ABERTO"
-    }
+    }    
   })
 }
+
+
 
   async listar() {
   return this.prisma.romaneio.findMany({

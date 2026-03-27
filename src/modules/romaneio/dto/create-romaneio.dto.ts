@@ -6,12 +6,12 @@ export class CreateRomaneioDTO {
 
   @IsString()
   @IsNotEmpty()
-  numero: string
+  numero?: number
 
 
   @IsString()
   @IsNotEmpty()
-  rota: string
+  rota?: string
 
 
   @IsString()
