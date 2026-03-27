@@ -8,14 +8,27 @@ export class RomaneioController {
   constructor(private readonly romaneioService: RomaneioService) {}
 
   @Post()
-    create(@Body() dto: CreateRomaneioDTO) {
+  create(@Body() dto: CreateRomaneioDTO) {
       console.log("🔥 BATEU NO CREATE ROMANEIO", dto)
-      return this.romaneioService.create(dto)
-    }
+    return this.romaneioService.create(dto)
+  }
 
   @Get()
   listar() {
     return this.romaneioService.listar()
+  }
+
+  @Post(":id/adicionar-item")
+  adicionarItem(
+    @Param("id") romaneioId: string,
+    @Body() body: {
+      clienteId: string
+      produtoId: string
+      embalagemId: string
+      quantidade: number
+    }
+  ) {
+    return this.romaneioService.adicionarItem(romaneioId, body)
   }
 
   @Get(':id')

@@ -124,6 +124,9 @@ model ItemRomaneio {
 model Romaneio {
   id String @id @default(uuid())
 
+  numero Int @unique   
+  rota   String?       
+
   motoristaId String
   motorista   Motorista @relation(fields: [motoristaId], references: [id])
 

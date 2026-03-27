@@ -18,7 +18,7 @@ export class MotoristaService {
           telefone: dto.telefone ?? "",
           cnh: dto.cnh ?? "",
           endereco: dto.endereco ?? "",
-          //ativo: true
+          ativo: true
         }
       })
 

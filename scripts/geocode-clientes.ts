@@ -74,13 +74,13 @@ async function atualizarClientes() {
    console.log("✅ Atualizado:", cliente.nomeFantasia)
 
    // ⚠️ RESPEITAR API
-   await new Promise(resolve => setTimeout(resolve, 3000))
+   await new Promise(resolve => setTimeout(resolve, 5000))
 
   } catch (error: any) {
 
    if (error.response?.status === 429) {
     console.log("⏳ Bloqueado pela API, aguardando...")
-    await new Promise(resolve => setTimeout(resolve, 5000))
+    await new Promise(resolve => setTimeout(resolve, 8000))
     continue
    }
 

@@ -16,14 +16,25 @@ export class RomaneioService {
     throw new Error("Motorista e veículo são obrigatórios")
   }
 
+  const ultimo = await this.prisma.romaneio.findFirst({
+    orderBy: { numero: "desc" }
+  })
+
+  const numero = ultimo ? ultimo.numero + 1 : 1
+
   const data = dto.dataSaida ? new Date(dto.dataSaida) : new Date()
 
   if (isNaN(data.getTime())) {
     throw new Error("Data inválida")
-  }
+  } 
+  
 
   return this.prisma.romaneio.create({
     data: {
+
+      numero, 
+      rota: dto.rota ?? null, 
+      
       motoristaId: dto.motoristaId,
       veiculoId: dto.veiculoId,
       dataSaida: data,
@@ -53,23 +64,74 @@ export class RomaneioService {
     })
   }
 
+  async adicionarItem(
+    romaneioId: string,
+    data: {
+      clienteId: string
+      produtoId: string
+      embalagemId: string
+      quantidade: number
+      }
+    ) {
+
+    return this.prisma.itemRomaneio.create({
+      data: {
+        romaneioId,
+        clienteId: data.clienteId,
+        produtoId: data.produtoId,
+        embalagemId: data.embalagemId,
+        quantidade: data.quantidade
+      }
+    })
+
+  }
+
   async findOne(id: string) {
     return this.prisma.romaneio.findUnique({
       where: { id },
       include: {
-        entregas: {
+        motorista: true,
+        veiculo: true,
+
+        itensRomaneio: {
           include: {
             cliente: true,
-            itens: {
-              include: {
-                produto: true,
-                embalagem: true
-              }
-            }
+            produto: true,
+            embalagem: true
           }
         }
       }
     })
+  }
+
+  async buscarOrganizado(id: string) {
+
+    const romaneio = await this.findOne(id) 
+
+    if (!romaneio) {
+      throw new NotFoundException("Romaneio não encontrado")
+    }
+
+    const agrupado: any = {}
+
+    for (const item of romaneio.itensRomaneio) {
+
+      const clienteId = item.clienteId
+
+      if (!agrupado[clienteId]) {
+        agrupado[clienteId] = {
+          cliente: item.cliente,
+          itens: []
+        }
+      }
+
+      agrupado[clienteId].itens.push(item)
+    }
+
+    return {
+      ...romaneio,
+      clientes: Object.values(agrupado)
+    }
   }
 
   async remove(id: string) {
