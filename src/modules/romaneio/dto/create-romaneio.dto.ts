@@ -1,17 +1,15 @@
-import { IsString, IsNotEmpty } from "class-validator"
+import { IsString, IsNotEmpty, IsOptional } from "class-validator"
 
 export class CreateRomaneioDTO {
 
 
 
-  @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   numero?: number
 
 
-  @IsString()
-  @IsNotEmpty()
-  rota?: string
+  @IsOptional()
+  rota: string
 
 
   @IsString()
