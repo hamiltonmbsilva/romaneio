@@ -132,6 +132,18 @@ async gerarCoordenadas(id: string) {
  })
 }
 
+async buscarClientes(nome?: string) {
+  return this.prisma.cliente.findMany({
+    where: {
+      nomeFantasia: {
+        contains: nome,
+        mode: "insensitive"
+      }
+    },
+    take: 10 // limita pra não pesar
+  })
+}
+
 
 async listar(page:number,search?:string,cidade?:string,estado?:string){
 

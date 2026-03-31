@@ -36,11 +36,17 @@ export class ClienteController{
         )
     }
 
- @Get("mapa")
+   @Get("mapa")
         listarMapa(){
         console.log("🔥 BATEU NO ENDPOINT MAPA")
         return this.service.listarMapa()
       }
+
+   @Get("buscar")
+      buscarClientes(@Query("nome") nome: string) {
+         console.log("Bateu, controller", nome, String)
+      return this.service.buscarClientes(nome)
+   }
 
     @Patch(":id/geocode")
       async gerarCoordenadas(@Param("id") id: string) {
