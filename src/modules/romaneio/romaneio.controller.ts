@@ -17,7 +17,11 @@ export class RomaneioController {
   listar() {
     return this.romaneioService.listar()
   }
-  
+
+  @Get(':id/peso')
+  calcularPeso(@Param('id') id: string) {
+    return this.romaneioService.ocupacaoVeiculo(id)
+  }    
 
   @Post(":id/adicionar-item")
   adicionarItem(

@@ -26,6 +26,7 @@ export class MotoristaController {
   findAll() {
     return this.motoristaService.findAll()
   }
+  
 
   @Get(':id')
   findOne(@Param('id') id: string) {
