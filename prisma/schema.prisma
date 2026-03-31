@@ -8,49 +8,47 @@ datasource db {
 }
 
 model Veiculo {
-  id           String     @id @default(uuid())
-  placa        String     @unique
+  id           String      @id @default(uuid())
+  placa        String      @unique
   modelo       String
   ano          Int
   kmInicial    Float
   kmFinal      Float?
   capacidadeKg Float
-  ativo        Boolean @default(true)
+  ativo        Boolean     @default(true)
   romaneios    Romaneio[]
   kmHistorico  VeiculoKm[]
-  createdAt    DateTime   @default(now())
+  createdAt    DateTime    @default(now())
 }
 
 model VeiculoKm {
+  id String @id @default(uuid())
 
-  id         String   @id @default(uuid())
+  veiculoId String
+  veiculo   Veiculo @relation(fields: [veiculoId], references: [id])
 
-  veiculoId  String
-  veiculo    Veiculo  @relation(fields: [veiculoId], references: [id])
+  kmSaida   Int
+  kmRetorno Int?
+  kmRodado  Int?
 
-  kmSaida    Int
-  kmRetorno  Int?
-  kmRodado   Int?
-
-  dataSaida  DateTime @default(now())
+  dataSaida   DateTime  @default(now())
   dataRetorno DateTime?
 }
 
-
 model Motorista {
-  id        String     @id @default(uuid())
-  nome      String?
-  cnh       String?     @unique
-  endereco  String?
-  telefone  String?
+  id       String  @id @default(uuid())
+  nome     String?
+  cnh      String? @unique
+  endereco String?
+  telefone String?
 
-  ativo             Boolean
+  ativo     Boolean
   romaneios Romaneio[]
   createdAt DateTime   @default(now())
 }
 
 model Cliente {
-  id           String @id @default(uuid())
+  id                String  @id @default(uuid())
   ativo             Boolean
   nomeFantasia      String?
   telefone          String?
@@ -63,8 +61,8 @@ model Cliente {
   bairro            String?
   inscricaoEstadual String?
 
-  latitude          Float?
-  longitude         Float?
+  latitude  Float?
+  longitude Float?
 
   entregas Entrega[]
 
@@ -73,17 +71,19 @@ model Cliente {
 }
 
 model Produto {
-  id        String   @id @default(uuid())
-  nome      String
+  id   String @id @default(uuid())
+  nome String
 
-  estoque   Int @default(0)
-  
+  estoque Int @default(0)
+
   createdAt DateTime @default(now())
 
   itensEntrega ItemEntrega[]
 
   embalagens    Embalagem[]
   itemRomaneios ItemRomaneio[]
+
+  estoques Estoque[]
 }
 
 model Embalagem {
@@ -100,6 +100,8 @@ model Embalagem {
   itensRomaneio ItemRomaneio[]
 
   createdAt DateTime @default(now())
+
+  estoques Estoque[]
 }
 
 model ItemRomaneio {
@@ -127,8 +129,8 @@ model ItemRomaneio {
 model Romaneio {
   id String @id @default(uuid())
 
-  numero Int @unique   
-  rota   String?       
+  numero Int     @unique
+  rota   String?
 
   motoristaId String
   motorista   Motorista @relation(fields: [motoristaId], references: [id])
@@ -182,3 +184,29 @@ model ItemEntrega {
   quantidade Int
 }
 
+model Estoque {
+  id String @id @default(uuid())
+
+  produtoId String
+  produto   Produto @relation(fields: [produtoId], references: [id])
+
+  embalagemId String
+  embalagem   Embalagem @relation(fields: [embalagemId], references: [id])
+
+  quantidade Int
+
+  updatedAt DateTime @updatedAt
+}
+
+model MovimentacaoEstoque {
+  id String @id @default(uuid())
+
+  produtoId   String
+  embalagemId String
+
+  tipo String // ENTRADA | SAIDA
+
+  quantidade Int
+
+  createdAt DateTime @default(now())
+}
