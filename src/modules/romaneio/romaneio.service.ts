@@ -10,8 +10,6 @@ export class RomaneioService {
 
   async create(dto: CreateRomaneioDTO) {
 
-  console.log("DTO RECEBIDO:", dto)
-
   if (!dto.motoristaId || !dto.veiculoId) {
     throw new Error("Motorista e veículo são obrigatórios")
   }
@@ -30,30 +28,30 @@ export class RomaneioService {
   
 
   return this.prisma.romaneio.create({  
-    data: {
-      numero, 
-      rota: dto.rota ?? null,       
-      motoristaId: dto.motoristaId,
-      veiculoId: dto.veiculoId,
-      dataSaida: new Date(data),
-      status: "ABERTO"
-    }    
-  })
-}
+      data: {
+        numero, 
+        rota: dto.rota ?? null,       
+        motoristaId: dto.motoristaId,
+        veiculoId: dto.veiculoId,
+        dataSaida: new Date(data),
+        status: "ABERTO"
+      }    
+    })
+  }
 
 
 
   async listar() {
-  return this.prisma.romaneio.findMany({
-    include: {
-      motorista: true,
-      veiculo: true
-    },
-    orderBy: {
-      createdAt: "desc"
-    }
-  })
- }
+    return this.prisma.romaneio.findMany({
+      include: {
+        motorista: true,
+        veiculo: true
+      },
+      orderBy: {
+        createdAt: "desc"
+      }
+    })
+  }
 
   async findAll() {
     return this.prisma.romaneio.findMany({
@@ -140,28 +138,30 @@ export class RomaneioService {
     })
   }
 
-  async calcularPesoRomaneio(romaneioId: string) {
-
-  const itens = await this.prisma.itemEntrega.findMany({
-    where: {
-      entrega: {
-        romaneioId
-      }
-    },
-    include: {
-      embalagem: true
-    }
+  async update(id: string, data: any) {
+  return this.prisma.itemRomaneio.update({
+    where: { id },
+    data
   })
+}
 
-  let pesoTotal = 0
+  async calcularPesoRomaneio(romaneioId: string) {   
 
-  for (const item of itens) {
+    const itens = await this.prisma.itemRomaneio.findMany({
+      where: {
+        romaneioId
+      },
+      include: {
+        embalagem: true
+      }
+    })
 
-    const pesoItem = item.embalagem.pesoUnitarioKg * item.quantidade
+    let pesoTotal = 0
 
-    pesoTotal += pesoItem
-
-  }
+    for (const item of itens) {
+      const pesoItem = item.embalagem.pesoUnitarioKg * item.quantidade
+      pesoTotal += pesoItem
+    }
 
   return pesoTotal
 }
@@ -169,29 +169,31 @@ export class RomaneioService {
 
 async ocupacaoVeiculo(romaneioId: string) {
 
-  const romaneio = await this.prisma.romaneio.findUnique({
-    where: { id: romaneioId },
-    include: {
-      veiculo: true
+    const romaneio = await this.prisma.romaneio.findUnique({
+      where: { id: romaneioId },
+      include: {
+        veiculo: true
+      }
+    })    
+
+    if (!romaneio) {
+      throw new NotFoundException('Romaneio não encontrado')
+    }    
+
+    const pesoTotal = await this.calcularPesoRomaneio(romaneioId)
+
+    const capacidade = romaneio.veiculo.capacidadeKg
+
+    const ocupacao = (pesoTotal / capacidade) * 100
+
+    console.log("Valores", pesoTotal, capacidade, ocupacao)
+
+    return {
+      pesoTotal,
+      capacidade,
+      ocupacao
     }
-  })
 
-  if (!romaneio) {
-    throw new NotFoundException('Romaneio não encontrado')
   }
-
-  const pesoTotal = await this.calcularPesoRomaneio(romaneioId)
-
-  const capacidade = romaneio.veiculo.capacidadeKg
-
-  const ocupacao = (pesoTotal / capacidade) * 100
-
-  return {
-    pesoTotal,
-    capacidade,
-    ocupacao
-  }
-
-}
 
 }
