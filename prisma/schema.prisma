@@ -123,6 +123,8 @@ model ItemRomaneio {
 
   observacao String?
 
+  precoUnitario Float?
+
   status String @default("PENDENTE")
 }
 

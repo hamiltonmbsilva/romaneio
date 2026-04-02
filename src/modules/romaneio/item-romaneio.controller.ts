@@ -1,5 +1,6 @@
-import { Controller, Delete, Param, Put, Body } from '@nestjs/common'
+import { Controller, Delete, Param, Put, Body, Post } from '@nestjs/common'
 import { ItemRomaneioService } from './item-romaneio.service'
+import { AddItemRomaneioDTO } from './dto/add-item-romaneio.dto'
 
 @Controller('item-romaneio')
 export class ItemRomaneioController {
@@ -17,5 +18,10 @@ export class ItemRomaneioController {
     @Body() body: any
   ) {
     return this.itemRomaneioService.update(id, body)
+  }
+
+  @Post()
+  adicionarItem(@Body() body: AddItemRomaneioDTO) {
+    return this.itemRomaneioService.adicionarItem(body.romaneioId, body)
   }
 }

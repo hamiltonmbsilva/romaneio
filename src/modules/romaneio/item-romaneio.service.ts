@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Post, Body } from '@nestjs/common'
 import { PrismaService } from 'src/shared/prisma/prisma.service'
+import { AddItemRomaneioDTO } from './dto/add-item-romaneio.dto'
 
 @Injectable()
 export class ItemRomaneioService {
@@ -16,6 +17,22 @@ export class ItemRomaneioService {
     return this.prisma.itemRomaneio.update({
       where: { id },
       data
+    })
+  }
+
+  async adicionarItem(
+  romaneioId: string,
+  data: AddItemRomaneioDTO
+  ) {
+    return this.prisma.itemRomaneio.create({
+      data: {
+        romaneioId,
+        clienteId: data.clienteId,
+        produtoId: data.produtoId,
+        embalagemId: data.embalagemId,
+        quantidade: data.quantidade,
+        precoUnitario: data.precoUnitario || 0
+      }
     })
   }
 }

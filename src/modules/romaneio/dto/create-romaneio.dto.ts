@@ -2,15 +2,11 @@ import { IsString, IsNotEmpty, IsOptional } from "class-validator"
 
 export class CreateRomaneioDTO {
 
-
-
   @IsOptional()
   numero?: number
 
-
   @IsOptional()
   rota: string
-
 
   @IsString()
   @IsNotEmpty()
@@ -24,3 +20,4 @@ export class CreateRomaneioDTO {
   @IsNotEmpty()
   dataSaida: string
 }
+
