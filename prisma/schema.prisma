@@ -27,6 +27,8 @@ model VeiculoKm {
   veiculoId String
   veiculo   Veiculo @relation(fields: [veiculoId], references: [id])
 
+  romaneioId String?
+
   kmSaida   Int
   kmRetorno Int?
   kmRodado  Int?
@@ -124,6 +126,10 @@ model ItemRomaneio {
   observacao String?
 
   precoUnitario Float?
+  numeroNF      String?
+
+  ordemEntrega       Int?
+  distanciaClienteKm Float?
 
   status String @default("PENDENTE")
 }
@@ -140,10 +146,17 @@ model Romaneio {
   veiculoId String
   veiculo   Veiculo @relation(fields: [veiculoId], references: [id])
 
-  dataSaida DateTime
-  dataFim   DateTime?
+  dataSaida  DateTime
+  dataInicio DateTime?
+  dataFim    DateTime?
 
-  status String @default("ABERTO")
+  kmSaida   Float?
+  kmRetorno Float?
+
+  distanciaPrevistaKm Float?
+  tempoPrevistoMin    Int?
+
+  status String @default("AGUARDANDO")
 
   entregas      Entrega[]
   itensRomaneio ItemRomaneio[]

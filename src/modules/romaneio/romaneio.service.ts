@@ -1,45 +1,39 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../../shared/prisma/prisma.service'
 import { CreateRomaneioDTO } from './dto/create-romaneio.dto'
-import { NotFoundException } from '@nestjs/common'
 
 @Injectable()
 export class RomaneioService {
-
   constructor(private prisma: PrismaService) {}
 
   async create(dto: CreateRomaneioDTO) {
+    if (!dto.motoristaId || !dto.veiculoId) {
+      throw new Error("Motorista e veículo são obrigatórios")
+    }
 
-  if (!dto.motoristaId || !dto.veiculoId) {
-    throw new Error("Motorista e veículo são obrigatórios")
-  }
+    const ultimo = await this.prisma.romaneio.findFirst({
+      orderBy: { numero: "desc" }
+    })
 
-  const ultimo = await this.prisma.romaneio.findFirst({
-    orderBy: { numero: "desc" }
-  })
+    const numero = ultimo ? ultimo.numero + 1 : 1
 
-  const numero = ultimo ? ultimo.numero + 1 : 1
+    const data = dto.dataSaida ? new Date(dto.dataSaida) : new Date()
 
-  const data = dto.dataSaida ? new Date(dto.dataSaida) : new Date()
+    if (isNaN(data.getTime())) {
+      throw new Error("Data inválida")
+    }
 
-  if (isNaN(data.getTime())) {
-    throw new Error("Data inválida")
-  } 
-  
-
-  return this.prisma.romaneio.create({  
+    return this.prisma.romaneio.create({
       data: {
-        numero, 
-        rota: dto.rota ?? null,       
+        numero,
+        rota: dto.rota ?? null,
         motoristaId: dto.motoristaId,
         veiculoId: dto.veiculoId,
         dataSaida: new Date(data),
-        status: "ABERTO"
-      }    
+        status: "AGUARDANDO"
+      }
     })
   }
-
-
 
   async listar() {
     return this.prisma.romaneio.findMany({
@@ -69,19 +63,19 @@ export class RomaneioService {
       produtoId: string
       embalagemId: string
       quantidade: number
-      }
-    ) {
-
+      precoUnitario: number
+    }
+  ) {
     return this.prisma.itemRomaneio.create({
       data: {
         romaneioId,
         clienteId: data.clienteId,
         produtoId: data.produtoId,
         embalagemId: data.embalagemId,
-        quantidade: data.quantidade
+        quantidade: data.quantidade,
+        precoUnitario: data.precoUnitario || 0
       }
     })
-
   }
 
   async findOne(id: string) {
@@ -90,7 +84,6 @@ export class RomaneioService {
       include: {
         motorista: true,
         veiculo: true,
-
         itensRomaneio: {
           include: {
             cliente: true,
@@ -103,8 +96,7 @@ export class RomaneioService {
   }
 
   async buscarOrganizado(id: string) {
-
-    const romaneio = await this.findOne(id) 
+    const romaneio = await this.findOne(id)
 
     if (!romaneio) {
       throw new NotFoundException("Romaneio não encontrado")
@@ -113,7 +105,6 @@ export class RomaneioService {
     const agrupado: any = {}
 
     for (const item of romaneio.itensRomaneio) {
-
       const clienteId = item.clienteId
 
       if (!agrupado[clienteId]) {
@@ -139,14 +130,13 @@ export class RomaneioService {
   }
 
   async update(id: string, data: any) {
-  return this.prisma.itemRomaneio.update({
-    where: { id },
-    data
-  })
-}
+    return this.prisma.itemRomaneio.update({
+      where: { id },
+      data
+    })
+  }
 
-  async calcularPesoRomaneio(romaneioId: string) {   
-
+  async calcularPesoRomaneio(romaneioId: string) {
     const itens = await this.prisma.itemRomaneio.findMany({
       where: {
         romaneioId
@@ -163,22 +153,20 @@ export class RomaneioService {
       pesoTotal += pesoItem
     }
 
-  return pesoTotal
-}
+    return pesoTotal
+  }
 
-
-async ocupacaoVeiculo(romaneioId: string) {
-
+  async ocupacaoVeiculo(romaneioId: string) {
     const romaneio = await this.prisma.romaneio.findUnique({
       where: { id: romaneioId },
       include: {
         veiculo: true
       }
-    })    
+    })
 
     if (!romaneio) {
       throw new NotFoundException('Romaneio não encontrado')
-    }    
+    }
 
     const pesoTotal = await this.calcularPesoRomaneio(romaneioId)
 
@@ -186,14 +174,62 @@ async ocupacaoVeiculo(romaneioId: string) {
 
     const ocupacao = (pesoTotal / capacidade) * 100
 
-    console.log("Valores", pesoTotal, capacidade, ocupacao)
-
     return {
       pesoTotal,
       capacidade,
       ocupacao
     }
-
   }
 
+  async iniciarRomaneio(id: string) {
+    const romaneio = await this.prisma.romaneio.findUnique({
+      where: { id },
+      include: {
+        veiculo: true
+      }
+    })
+
+    if (!romaneio) {
+      throw new NotFoundException("Romaneio não encontrado")
+    }
+
+    if (romaneio.status === "EM_ENTREGA") {
+      throw new Error("Romaneio já foi iniciado")
+    }
+
+    if (romaneio.status === "FINALIZADO") {
+      throw new Error("Romaneio já foi finalizado")
+    }
+
+    const ultimoHistorico = await this.prisma.veiculoKm.findFirst({
+      where: {
+        veiculoId: romaneio.veiculoId
+      },
+      orderBy: {
+        dataSaida: "desc"
+      }
+    })
+
+    const kmSaida = ultimoHistorico?.kmRetorno ?? Math.round(romaneio.veiculo.kmInicial)
+
+    const romaneioAtualizado = await this.prisma.romaneio.update({
+      where: { id },
+      data: {
+        status: "EM_ENTREGA",
+        dataInicio: new Date(),
+        kmSaida
+      }
+    })
+
+    await this.prisma.veiculoKm.create({
+      data: {
+        veiculoId: romaneio.veiculoId,
+        romaneioId: romaneio.id,
+        kmSaida,
+        dataSaida: new Date()
+      }
+    })
+
+    return romaneioAtualizado
+  }
 }
