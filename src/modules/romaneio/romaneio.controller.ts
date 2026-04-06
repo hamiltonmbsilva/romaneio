@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Param, Delete, Put } from '@nestjs/common'
 import { RomaneioService } from './romaneio.service'
 import { CreateRomaneioDTO } from './dto/create-romaneio.dto'
 import { ItemRomaneioService } from './item-romaneio.service'
+import { FinalizarRomaneioDTO } from '../romaneio/dto/finalizar-romaneio.dto'       
 
 @Controller('romaneio')
 export class RomaneioController {
@@ -44,6 +45,14 @@ export class RomaneioController {
     return this.romaneioService.iniciarRomaneio(id)
   }
 
+  @Post(':id/finalizar')
+  finalizar(
+    @Param('id') id: string,
+    @Body() body: FinalizarRomaneioDTO
+  ) {
+    return this.romaneioService.finalizarRomaneio(id, body.kmRetorno)
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.romaneioService.findOne(id)
@@ -61,4 +70,6 @@ export class RomaneioController {
   ) {
     return this.itemRomaneioService.update(id, body)
   }
+
+  
 }

@@ -1,4 +1,4 @@
-import { Injectable, Post, Body } from '@nestjs/common'
+import { Injectable, Post, Body, NotFoundException } from '@nestjs/common'
 import { PrismaService } from 'src/shared/prisma/prisma.service'
 import { AddItemRomaneioDTO } from './dto/add-item-romaneio.dto'
 
@@ -35,4 +35,6 @@ export class ItemRomaneioService {
       }
     })
   }
+
+  
 }

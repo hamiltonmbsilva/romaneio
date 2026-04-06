@@ -232,4 +232,78 @@ export class RomaneioService {
 
     return romaneioAtualizado
   }
+
+  async finalizarRomaneio(id: string, kmRetorno: number) {
+    const romaneio = await this.prisma.romaneio.findUnique({
+      where: { id },
+      include: {
+        veiculo: true
+      }
+    })
+
+    if (!romaneio) {
+      throw new NotFoundException('Romaneio não encontrado')
+    }
+
+    if (romaneio.status !== 'EM_ENTREGA') {
+      throw new Error('Só é possível finalizar romaneio em entrega')
+    }
+
+    if (romaneio.veiculo.kmInicial == null) {
+      throw new Error('Romaneio sem KM de saída')
+    }
+
+    if (kmRetorno < romaneio.veiculo.kmInicial) {
+      throw new Error('KM de retorno não pode ser menor que KM de saída')
+    }
+
+    const kmRodado = kmRetorno - romaneio.veiculo.kmInicial
+
+    const historicoAberto = await this.prisma.veiculoKm.findFirst({
+      where: {
+        romaneioId: romaneio.id,
+        veiculoId: romaneio.veiculoId,
+        kmRetorno: null
+      },
+      orderBy: {
+        dataSaida: 'desc'
+      }
+    })
+
+    if (!historicoAberto) {
+      throw new Error('Histórico de KM aberto não encontrado para esse romaneio')
+    }
+
+    await this.prisma.veiculoKm.update({
+      where: { id: historicoAberto.id },
+      data: {
+        kmRetorno: Math.round(kmRetorno),
+        kmRodado: Math.round(kmRodado),
+        dataRetorno: new Date()
+      }
+    })
+
+    const romaneioAtualizado = await this.prisma.romaneio.update({
+      where: { id },
+      data: {
+        status: 'FINALIZADO',
+        kmRetorno,
+        dataFim: new Date()
+      }
+    })
+
+    await this.prisma.veiculo.update({
+      where: { id: romaneio.veiculoId },
+      data: {
+        kmFinal: kmRetorno
+      }
+    })
+
+    return {
+      message: 'Romaneio finalizado com sucesso',
+      kmRodado,
+      romaneio: romaneioAtualizado
+    }
+  }
+  
 }
