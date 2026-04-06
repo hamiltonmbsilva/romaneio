@@ -27,18 +27,19 @@ export class RomaneioController {
   }
 
   @Post(':id/adicionar-item')
-  adicionarItem(
-    @Param('id') romaneioId: string,
-    @Body() body: {
-      clienteId: string
-      produtoId: string
-      embalagemId: string
-      quantidade: number
-      precoUnitario: number
+    adicionarItem(
+      @Param('id') romaneioId: string,
+      @Body() body: {
+        clienteId: string
+        produtoId: string
+        embalagemId: string
+        quantidade: number
+        precoUnitario: number
+        numeroNF?: string
+      }
+    ) {
+      return this.romaneioService.adicionarItem(romaneioId, body)
     }
-  ) {
-    return this.romaneioService.adicionarItem(romaneioId, body)
-  }
 
   @Post(':id/iniciar')
   iniciar(@Param('id') id: string) {

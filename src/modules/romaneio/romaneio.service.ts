@@ -64,8 +64,21 @@ export class RomaneioService {
       embalagemId: string
       quantidade: number
       precoUnitario: number
+      numeroNF?: string
     }
   ) {
+    const romaneio = await this.prisma.romaneio.findUnique({
+      where: { id: romaneioId }
+    })
+
+    if (!romaneio) {
+      throw new NotFoundException("Romaneio não encontrado")
+    }
+
+    if (romaneio.status === "FINALIZADO") {
+      throw new Error("Não é possível adicionar item em romaneio finalizado")
+    }
+
     return this.prisma.itemRomaneio.create({
       data: {
         romaneioId,
@@ -73,7 +86,8 @@ export class RomaneioService {
         produtoId: data.produtoId,
         embalagemId: data.embalagemId,
         quantidade: data.quantidade,
-        precoUnitario: data.precoUnitario || 0
+        precoUnitario: data.precoUnitario || 0,
+        numeroNF: data.numeroNF || null
       }
     })
   }

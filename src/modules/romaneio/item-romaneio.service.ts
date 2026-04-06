@@ -8,12 +8,42 @@ export class ItemRomaneioService {
   constructor(private prisma: PrismaService) {}
 
   async remove(id: string) {
+    const item = await this.prisma.itemRomaneio.findUnique({
+      where: { id },
+      include: {
+        romaneio: true
+      }
+    })
+
+    if (!item) {
+      throw new Error("Item do romaneio não encontrado")
+    }
+
+    if (item.romaneio.status === "FINALIZADO") {
+      throw new Error("Não é possível excluir item de romaneio finalizado")
+    }
+
     return this.prisma.itemRomaneio.delete({
       where: { id }
     })
   }
 
   async update(id: string, data: any) {
+    const item = await this.prisma.itemRomaneio.findUnique({
+      where: { id },
+      include: {
+        romaneio: true
+      }
+    })
+
+    if (!item) {
+      throw new Error("Item do romaneio não encontrado")
+    }
+
+    if (item.romaneio.status === "FINALIZADO") {
+      throw new Error("Não é possível editar item de romaneio finalizado")
+    }
+
     return this.prisma.itemRomaneio.update({
       where: { id },
       data
