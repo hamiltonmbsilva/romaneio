@@ -50,6 +50,30 @@ export class ItemRomaneioService {
     })
   }
 
+  async atualizarStatus(id: string, status: string) {
+    const item = await this.prisma.itemRomaneio.findUnique({
+      where: { id },
+      include: {
+        romaneio: true
+      }
+    })
+
+    if (!item) {
+      throw new Error("Item do romaneio não encontrado")
+    }
+
+    if (item.romaneio.status === "FINALIZADO") {
+      throw new Error("Romaneio finalizado não permite alterar status")
+  }
+
+  return this.prisma.itemRomaneio.update({
+    where: { id },
+    data: {
+      status
+    }
+  })
+  }
+
   async adicionarItem(
   romaneioId: string,
   data: AddItemRomaneioDTO

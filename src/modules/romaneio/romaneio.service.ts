@@ -8,11 +8,11 @@ export class RomaneioService {
 
   async create(dto: CreateRomaneioDTO) {
     if (!dto.motoristaId || !dto.veiculoId) {
-      throw new Error("Motorista e veículo são obrigatórios")
+      throw new Error('Motorista e veículo são obrigatórios')
     }
 
     const ultimo = await this.prisma.romaneio.findFirst({
-      orderBy: { numero: "desc" }
+      orderBy: { numero: 'desc' }
     })
 
     const numero = ultimo ? ultimo.numero + 1 : 1
@@ -20,7 +20,7 @@ export class RomaneioService {
     const data = dto.dataSaida ? new Date(dto.dataSaida) : new Date()
 
     if (isNaN(data.getTime())) {
-      throw new Error("Data inválida")
+      throw new Error('Data inválida')
     }
 
     return this.prisma.romaneio.create({
@@ -30,7 +30,7 @@ export class RomaneioService {
         motoristaId: dto.motoristaId,
         veiculoId: dto.veiculoId,
         dataSaida: new Date(data),
-        status: "AGUARDANDO"
+        status: 'AGUARDANDO'
       }
     })
   }
@@ -42,7 +42,7 @@ export class RomaneioService {
         veiculo: true
       },
       orderBy: {
-        createdAt: "desc"
+        createdAt: 'desc'
       }
     })
   }
@@ -52,6 +52,9 @@ export class RomaneioService {
       include: {
         motorista: true,
         veiculo: true
+      },
+      orderBy: {
+        createdAt: 'desc'
       }
     })
   }
@@ -72,11 +75,11 @@ export class RomaneioService {
     })
 
     if (!romaneio) {
-      throw new NotFoundException("Romaneio não encontrado")
+      throw new NotFoundException('Romaneio não encontrado')
     }
 
-    if (romaneio.status === "FINALIZADO") {
-      throw new Error("Não é possível adicionar item em romaneio finalizado")
+    if (romaneio.status === 'FINALIZADO') {
+      throw new Error('Não é possível adicionar item em romaneio finalizado')
     }
 
     return this.prisma.itemRomaneio.create({
@@ -113,10 +116,16 @@ export class RomaneioService {
     const romaneio = await this.findOne(id)
 
     if (!romaneio) {
-      throw new NotFoundException("Romaneio não encontrado")
+      throw new NotFoundException('Romaneio não encontrado')
     }
 
-    const agrupado: any = {}
+    const agrupado: Record<
+      string,
+      {
+        cliente: any
+        itens: any[]
+      }
+    > = {}
 
     for (const item of romaneio.itensRomaneio) {
       const clienteId = item.clienteId
@@ -134,6 +143,77 @@ export class RomaneioService {
     return {
       ...romaneio,
       clientes: Object.values(agrupado)
+    }
+  }
+
+  async listarEntregasDoRomaneio(id: string) {
+    const romaneio = await this.prisma.romaneio.findUnique({
+      where: { id },
+      include: {
+        motorista: true,
+        veiculo: true,
+        itensRomaneio: {
+          include: {
+            cliente: true,
+            produto: true,
+            embalagem: true
+          }
+        }
+      }
+    })
+
+    if (!romaneio) {
+      throw new NotFoundException('Romaneio não encontrado')
+    }
+
+    const agrupado: Record<
+      string,
+      {
+        clienteId: string
+        cliente: any
+        status: string
+        numeroNF: string | null
+        itens: any[]
+        totalCliente: number
+        pesoCliente: number
+      }
+    > = {}
+
+    for (const item of romaneio.itensRomaneio) {
+      if (!agrupado[item.clienteId]) {
+        agrupado[item.clienteId] = {
+          clienteId: item.clienteId,
+          cliente: item.cliente,
+          status: item.status || 'PENDENTE',
+          numeroNF: item.numeroNF || null,
+          itens: [],
+          totalCliente: 0,
+          pesoCliente: 0
+        }
+      }
+
+      const totalItem = item.quantidade * (item.precoUnitario || 0)
+      const pesoItem = item.quantidade * (item.embalagem?.pesoUnitarioKg || 0)
+
+      agrupado[item.clienteId].itens.push(item)
+      agrupado[item.clienteId].totalCliente += totalItem
+      agrupado[item.clienteId].pesoCliente += pesoItem
+    }
+
+    return {
+      romaneio: {
+        id: romaneio.id,
+        numero: romaneio.numero,
+        status: romaneio.status,
+        motorista: romaneio.motorista,
+        veiculo: romaneio.veiculo,
+        kmSaida: romaneio.kmSaida,
+        kmRetorno: romaneio.kmRetorno,
+        dataSaida: romaneio.dataSaida,
+        dataInicio: romaneio.dataInicio,
+        dataFim: romaneio.dataFim
+      },
+      entregas: Object.values(agrupado)
     }
   }
 
@@ -183,9 +263,7 @@ export class RomaneioService {
     }
 
     const pesoTotal = await this.calcularPesoRomaneio(romaneioId)
-
     const capacidade = romaneio.veiculo.capacidadeKg
-
     const ocupacao = (pesoTotal / capacidade) * 100
 
     return {
@@ -204,15 +282,15 @@ export class RomaneioService {
     })
 
     if (!romaneio) {
-      throw new NotFoundException("Romaneio não encontrado")
+      throw new NotFoundException('Romaneio não encontrado')
     }
 
-    if (romaneio.status === "EM_ENTREGA") {
-      throw new Error("Romaneio já foi iniciado")
+    if (romaneio.status === 'EM_ENTREGA') {
+      throw new Error('Romaneio já foi iniciado')
     }
 
-    if (romaneio.status === "FINALIZADO") {
-      throw new Error("Romaneio já foi finalizado")
+    if (romaneio.status === 'FINALIZADO') {
+      throw new Error('Romaneio já foi finalizado')
     }
 
     const ultimoHistorico = await this.prisma.veiculoKm.findFirst({
@@ -220,16 +298,17 @@ export class RomaneioService {
         veiculoId: romaneio.veiculoId
       },
       orderBy: {
-        dataSaida: "desc"
+        dataSaida: 'desc'
       }
     })
 
-    const kmSaida = ultimoHistorico?.kmRetorno ?? Math.round(romaneio.veiculo.kmInicial)
+    const kmSaida =
+      ultimoHistorico?.kmRetorno ?? Math.round(romaneio.veiculo.kmInicial)
 
     const romaneioAtualizado = await this.prisma.romaneio.update({
       where: { id },
       data: {
-        status: "EM_ENTREGA",
+        status: 'EM_ENTREGA',
         dataInicio: new Date(),
         kmSaida
       }
@@ -263,15 +342,15 @@ export class RomaneioService {
       throw new Error('Só é possível finalizar romaneio em entrega')
     }
 
-    if (romaneio.veiculo.kmInicial == null) {
+    if (romaneio.kmSaida == null) {
       throw new Error('Romaneio sem KM de saída')
     }
 
-    if (kmRetorno < romaneio.veiculo.kmInicial) {
+    if (kmRetorno < romaneio.kmSaida) {
       throw new Error('KM de retorno não pode ser menor que KM de saída')
     }
 
-    const kmRodado = kmRetorno - romaneio.veiculo.kmInicial
+    const kmRodado = kmRetorno - romaneio.kmSaida
 
     const historicoAberto = await this.prisma.veiculoKm.findFirst({
       where: {
@@ -319,5 +398,4 @@ export class RomaneioService {
       romaneio: romaneioAtualizado
     }
   }
-  
 }

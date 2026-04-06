@@ -20,6 +20,14 @@ export class ItemRomaneioController {
     return this.itemRomaneioService.update(id, body)
   }
 
+  @Put(':id/status')
+    atualizarStatus(
+      @Param('id') id: string,
+      @Body() body: { status: string }
+    ) {
+      return this.itemRomaneioService.atualizarStatus(id, body.status)
+  }
+
   @Post()
   adicionarItem(@Body() body: AddItemRomaneioDTO) {
     return this.itemRomaneioService.adicionarItem(body.romaneioId, body)

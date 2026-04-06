@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, Delete, Put } from '@nestjs/common'
 import { RomaneioService } from './romaneio.service'
 import { CreateRomaneioDTO } from './dto/create-romaneio.dto'
 import { ItemRomaneioService } from './item-romaneio.service'
-import { FinalizarRomaneioDTO } from '../romaneio/dto/finalizar-romaneio.dto'       
+import { FinalizarRomaneioDTO } from './dto/finalizar-romaneio.dto'
 
 @Controller('romaneio')
 export class RomaneioController {
@@ -27,19 +27,19 @@ export class RomaneioController {
   }
 
   @Post(':id/adicionar-item')
-    adicionarItem(
-      @Param('id') romaneioId: string,
-      @Body() body: {
-        clienteId: string
-        produtoId: string
-        embalagemId: string
-        quantidade: number
-        precoUnitario: number
-        numeroNF?: string
-      }
-    ) {
-      return this.romaneioService.adicionarItem(romaneioId, body)
+  adicionarItem(
+    @Param('id') romaneioId: string,
+    @Body() body: {
+      clienteId: string
+      produtoId: string
+      embalagemId: string
+      quantidade: number
+      precoUnitario: number
+      numeroNF?: string
     }
+  ) {
+    return this.romaneioService.adicionarItem(romaneioId, body)
+  }
 
   @Post(':id/iniciar')
   iniciar(@Param('id') id: string) {
@@ -52,6 +52,11 @@ export class RomaneioController {
     @Body() body: FinalizarRomaneioDTO
   ) {
     return this.romaneioService.finalizarRomaneio(id, body.kmRetorno)
+  }
+
+  @Get(':id/entregas')
+  listarEntregas(@Param('id') id: string) {
+    return this.romaneioService.listarEntregasDoRomaneio(id)
   }
 
   @Get(':id')
@@ -71,6 +76,4 @@ export class RomaneioController {
   ) {
     return this.itemRomaneioService.update(id, body)
   }
-
-  
 }
