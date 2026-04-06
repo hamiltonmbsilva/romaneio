@@ -398,4 +398,188 @@ export class RomaneioService {
       romaneio: romaneioAtualizado
     }
   }
+
+  private obterRegiaoBase(cliente: any) {
+  if (cliente?.cidade && cliente.cidade.trim()) return cliente.cidade.trim()
+  if (cliente?.bairro && cliente.bairro.trim()) return cliente.bairro.trim()
+  return 'Sem região'
+  }
+
+  async calcularRotaRomaneio(id: string) {
+    const romaneio = await this.prisma.romaneio.findUnique({
+      where: { id },
+      include: {
+        itensRomaneio: {
+          include: {
+            cliente: true,
+            embalagem: true
+          }
+        }
+      }
+    })
+
+    if (!romaneio) {
+      throw new NotFoundException('Romaneio não encontrado')
+    }
+
+    if (romaneio.status === 'FINALIZADO') {
+      throw new Error('Não é possível calcular rota para romaneio finalizado')
+    }
+
+    if (!romaneio.itensRomaneio.length) {
+      throw new Error('Adicione itens ao romaneio antes de calcular a rota')
+    }
+
+    const clientesMap = new Map<
+      string,
+      {
+        clienteId: string
+        nomeFantasia: string
+        cidade: string
+        bairro: string
+        endereco: string
+        regiao: string
+        totalPeso: number
+        totalValor: number
+        quantidadeItens: number
+      }
+    >()
+
+    for (const item of romaneio.itensRomaneio) {
+      const cliente = item.cliente
+      const regiao = this.obterRegiaoBase(cliente)
+      const pesoItem = item.quantidade * (item.embalagem?.pesoUnitarioKg || 0)
+      const valorItem = item.quantidade * (item.precoUnitario || 0)
+
+      if (!clientesMap.has(item.clienteId)) {
+        clientesMap.set(item.clienteId, {
+          clienteId: item.clienteId,
+          nomeFantasia: cliente?.nomeFantasia || 'Cliente sem nome',
+          cidade: cliente?.cidade || '',
+          bairro: cliente?.bairro || '',
+          endereco: cliente?.endereco || '',
+          regiao,
+          totalPeso: 0,
+          totalValor: 0,
+          quantidadeItens: 0
+        })
+      }
+
+      const atual = clientesMap.get(item.clienteId)!
+      atual.totalPeso += pesoItem
+      atual.totalValor += valorItem
+      atual.quantidadeItens += 1
+    }
+
+    const clientesOrdenados = Array.from(clientesMap.values()).sort((a, b) => {
+      const regiaoCompare = a.regiao.localeCompare(b.regiao, 'pt-BR')
+      if (regiaoCompare !== 0) return regiaoCompare
+
+      const bairroCompare = a.bairro.localeCompare(b.bairro, 'pt-BR')
+      if (bairroCompare !== 0) return bairroCompare
+
+      const enderecoCompare = a.endereco.localeCompare(b.endereco, 'pt-BR')
+      if (enderecoCompare !== 0) return enderecoCompare
+
+      return a.nomeFantasia.localeCompare(b.nomeFantasia, 'pt-BR')
+    })
+
+    await this.prisma.$transaction(
+      clientesOrdenados.map((cliente, index) =>
+        this.prisma.itemRomaneio.updateMany({
+          where: {
+            romaneioId: id,
+            clienteId: cliente.clienteId
+          },
+          data: {
+            ordemEntrega: index + 1
+          }
+        })
+      )
+    )
+
+    return {
+      message: 'Rota base calculada com sucesso',
+      clientes: clientesOrdenados.map((cliente, index) => ({
+        ordemEntrega: index + 1,
+        ...cliente
+      }))
+    }
+  }
+
+  async buscarRotaRomaneio(id: string) {
+    const romaneio = await this.prisma.romaneio.findUnique({
+      where: { id },
+      include: {
+        itensRomaneio: {
+          include: {
+            cliente: true,
+            embalagem: true
+          },
+          orderBy: {
+            ordemEntrega: 'asc'
+          }
+        }
+      }
+    })
+
+    if (!romaneio) {
+      throw new NotFoundException('Romaneio não encontrado')
+    }
+
+    const agrupado = new Map<
+      string,
+      {
+        ordemEntrega: number | null
+        clienteId: string
+        nomeFantasia: string
+        cidade: string
+        bairro: string
+        endereco: string
+        regiao: string
+        totalPeso: number
+        totalValor: number
+        quantidadeItens: number
+      }
+    >()
+
+    for (const item of romaneio.itensRomaneio) {
+      const cliente = item.cliente
+      const regiao = this.obterRegiaoBase(cliente)
+      const pesoItem = item.quantidade * (item.embalagem?.pesoUnitarioKg || 0)
+      const valorItem = item.quantidade * (item.precoUnitario || 0)
+
+      if (!agrupado.has(item.clienteId)) {
+        agrupado.set(item.clienteId, {
+          ordemEntrega: item.ordemEntrega ?? null,
+          clienteId: item.clienteId,
+          nomeFantasia: cliente?.nomeFantasia || 'Cliente sem nome',
+          cidade: cliente?.cidade || '',
+          bairro: cliente?.bairro || '',
+          endereco: cliente?.endereco || '',
+          regiao,
+          totalPeso: 0,
+          totalValor: 0,
+          quantidadeItens: 0
+        })
+      }
+
+      const atual = agrupado.get(item.clienteId)!
+      atual.totalPeso += pesoItem
+      atual.totalValor += valorItem
+      atual.quantidadeItens += 1
+    }
+
+    const clientes = Array.from(agrupado.values()).sort((a, b) => {
+      const ordemA = a.ordemEntrega ?? 9999
+      const ordemB = b.ordemEntrega ?? 9999
+      return ordemA - ordemB
+    })
+
+    return {
+      romaneioId: romaneio.id,
+      clientes
+    }
+  }
+
 }

@@ -54,6 +54,16 @@ export class RomaneioController {
     return this.romaneioService.finalizarRomaneio(id, body.kmRetorno)
   }
 
+  @Post(':id/calcular-rota')
+  calcularRota(@Param('id') id: string) {
+    return this.romaneioService.calcularRotaRomaneio(id)
+  }
+
+  @Get(':id/rota')
+  buscarRota(@Param('id') id: string) {
+    return this.romaneioService.buscarRotaRomaneio(id)
+  }
+
   @Get(':id/entregas')
   listarEntregas(@Param('id') id: string) {
     return this.romaneioService.listarEntregasDoRomaneio(id)
