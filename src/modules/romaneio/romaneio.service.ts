@@ -1,10 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../../shared/prisma/prisma.service'
 import { CreateRomaneioDTO } from './dto/create-romaneio.dto'
+import { GeocodingService } from '../../shared/services/geocoding.service'
 
 @Injectable()
 export class RomaneioService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService,
+    private geocodingService: GeocodingService
+  ) {}
 
   async create(dto: CreateRomaneioDTO) {
     if (!dto.motoristaId || !dto.veiculoId) {
@@ -400,9 +403,9 @@ export class RomaneioService {
   }
 
   private obterRegiaoBase(cliente: any) {
-  if (cliente?.cidade && cliente.cidade.trim()) return cliente.cidade.trim()
-  if (cliente?.bairro && cliente.bairro.trim()) return cliente.bairro.trim()
-  return 'Sem região'
+    if (cliente?.cidade && cliente.cidade.trim()) return cliente.cidade.trim()
+    if (cliente?.bairro && cliente.bairro.trim()) return cliente.bairro.trim()
+    return 'Sem região'
   }
 
   async calcularRotaRomaneio(id: string) {
@@ -434,11 +437,7 @@ export class RomaneioService {
       string,
       {
         clienteId: string
-        nomeFantasia: string
-        cidade: string
-        bairro: string
-        endereco: string
-        regiao: string
+        cliente: any
         totalPeso: number
         totalValor: number
         quantidadeItens: number
@@ -446,19 +445,13 @@ export class RomaneioService {
     >()
 
     for (const item of romaneio.itensRomaneio) {
-      const cliente = item.cliente
-      const regiao = this.obterRegiaoBase(cliente)
       const pesoItem = item.quantidade * (item.embalagem?.pesoUnitarioKg || 0)
       const valorItem = item.quantidade * (item.precoUnitario || 0)
 
       if (!clientesMap.has(item.clienteId)) {
         clientesMap.set(item.clienteId, {
           clienteId: item.clienteId,
-          nomeFantasia: cliente?.nomeFantasia || 'Cliente sem nome',
-          cidade: cliente?.cidade || '',
-          bairro: cliente?.bairro || '',
-          endereco: cliente?.endereco || '',
-          regiao,
+          cliente: item.cliente,
           totalPeso: 0,
           totalValor: 0,
           quantidadeItens: 0
@@ -471,7 +464,86 @@ export class RomaneioService {
       atual.quantidadeItens += 1
     }
 
-    const clientesOrdenados = Array.from(clientesMap.values()).sort((a, b) => {
+    const clientesUnicos = Array.from(clientesMap.values())
+
+    const clientesValidos: Array<{
+      clienteId: string
+      nomeFantasia: string
+      cidade: string
+      bairro: string
+      endereco: string
+      regiao: string
+      latitude: number
+      longitude: number
+      totalPeso: number
+      totalValor: number
+      quantidadeItens: number
+    }> = []
+
+    const clientesPendentes: Array<{
+      clienteId: string
+      nomeFantasia: string
+      cidade: string
+      bairro: string
+      endereco: string
+      regiao: string
+      motivo: string
+    }> = []
+
+    for (const registro of clientesUnicos) {
+      const cliente = registro.cliente
+      const regiao = this.obterRegiaoBase(cliente)
+
+      const resultado = await this.geocodingService.garantirCoordenadasCliente({
+        id: cliente.id,
+        nomeFantasia: cliente.nomeFantasia,
+        endereco: cliente.endereco,
+        bairro: cliente.bairro,
+        cidade: cliente.cidade,
+        estado: cliente.estado,
+        latitude: cliente.latitude,
+        longitude: cliente.longitude
+      })
+
+      if (!resultado.ok) {
+        clientesPendentes.push({
+          clienteId: cliente.id,
+          nomeFantasia: cliente.nomeFantasia || 'Cliente sem nome',
+          cidade: cliente.cidade || '',
+          bairro: cliente.bairro || '',
+          endereco: cliente.endereco || '',
+          regiao,
+          motivo: `${resultado.motivo}. Busca usada: ${resultado.enderecoCompleto || 'não informado'}`
+        })
+        continue
+      }
+
+      if (cliente.latitude == null || cliente.longitude == null) {
+        await this.prisma.cliente.update({
+          where: { id: cliente.id },
+          data: {
+            latitude: resultado.latitude,
+            longitude: resultado.longitude
+          }
+        })
+      }
+
+      clientesValidos.push({
+        clienteId: cliente.id,
+        nomeFantasia: cliente.nomeFantasia || 'Cliente sem nome',
+        cidade: cliente.cidade || '',
+        bairro: cliente.bairro || '',
+        endereco: cliente.endereco || '',
+        regiao,
+        latitude: resultado.latitude,
+        longitude: resultado.longitude,
+        totalPeso: registro.totalPeso,
+        totalValor: registro.totalValor,
+        quantidadeItens: registro.quantidadeItens
+      })
+    }
+
+    const clientesOrdenados = clientesValidos.sort((a, b) => {
       const regiaoCompare = a.regiao.localeCompare(b.regiao, 'pt-BR')
       if (regiaoCompare !== 0) return regiaoCompare
 
@@ -484,8 +556,12 @@ export class RomaneioService {
       return a.nomeFantasia.localeCompare(b.nomeFantasia, 'pt-BR')
     })
 
-    await this.prisma.$transaction(
-      clientesOrdenados.map((cliente, index) =>
+    await this.prisma.$transaction([
+      this.prisma.itemRomaneio.updateMany({
+        where: { romaneioId: id },
+        data: { ordemEntrega: null }
+      }),
+      ...clientesOrdenados.map((cliente, index) =>
         this.prisma.itemRomaneio.updateMany({
           where: {
             romaneioId: id,
@@ -496,14 +572,20 @@ export class RomaneioService {
           }
         })
       )
-    )
+    ])
 
     return {
       message: 'Rota base calculada com sucesso',
-      clientes: clientesOrdenados.map((cliente, index) => ({
+      resumo: {
+        totalClientes: clientesUnicos.length,
+        validosParaRota: clientesOrdenados.length,
+        pendentes: clientesPendentes.length
+      },
+      clientesValidos: clientesOrdenados.map((cliente, index) => ({
         ordemEntrega: index + 1,
         ...cliente
-      }))
+      })),
+      clientesPendentes
     }
   }
 
@@ -537,6 +619,8 @@ export class RomaneioService {
         bairro: string
         endereco: string
         regiao: string
+        latitude: number | null
+        longitude: number | null
         totalPeso: number
         totalValor: number
         quantidadeItens: number
@@ -558,6 +642,8 @@ export class RomaneioService {
           bairro: cliente?.bairro || '',
           endereco: cliente?.endereco || '',
           regiao,
+          latitude: cliente?.latitude ?? null,
+          longitude: cliente?.longitude ?? null,
           totalPeso: 0,
           totalValor: 0,
           quantidadeItens: 0
@@ -576,9 +662,13 @@ export class RomaneioService {
       return ordemA - ordemB
     })
 
+    const clientesValidos = clientes.filter((c) => c.latitude != null && c.longitude != null)
+    const clientesPendentes = clientes.filter((c) => c.latitude == null || c.longitude == null)
+
     return {
       romaneioId: romaneio.id,
-      clientes
+      clientesValidos,
+      clientesPendentes
     }
   }
 

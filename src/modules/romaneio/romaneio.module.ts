@@ -4,10 +4,11 @@ import { ItemRomaneioService } from './item-romaneio.service'
 import { RomaneioController } from './romaneio.controller'
 import { ItemRomaneioController } from './item-romaneio.controller'
 import { PrismaService } from '../../shared/prisma/prisma.service'
+import { GeocodingService } from '../../shared/services/geocoding.service'
 
 @Module({
   controllers: [RomaneioController, ItemRomaneioController],
-  providers: [RomaneioService, PrismaService, ItemRomaneioService],
+  providers: [RomaneioService, PrismaService, ItemRomaneioService, GeocodingService],
 })
 export class RomaneioModule {}
 
