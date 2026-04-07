@@ -160,6 +160,9 @@ export class RomaneioService {
             cliente: true,
             produto: true,
             embalagem: true
+          },
+          orderBy: {
+            ordemEntrega: 'asc'
           }
         }
       }
@@ -176,6 +179,7 @@ export class RomaneioService {
         cliente: any
         status: string
         numeroNF: string | null
+        ordemEntrega: number | null
         itens: any[]
         totalCliente: number
         pesoCliente: number
@@ -189,6 +193,7 @@ export class RomaneioService {
           cliente: item.cliente,
           status: item.status || 'PENDENTE',
           numeroNF: item.numeroNF || null,
+          ordemEntrega: item.ordemEntrega ?? null,
           itens: [],
           totalCliente: 0,
           pesoCliente: 0
@@ -203,6 +208,12 @@ export class RomaneioService {
       agrupado[item.clienteId].pesoCliente += pesoItem
     }
 
+    const entregasOrdenadas = Object.values(agrupado).sort((a, b) => {
+      const ordemA = a.ordemEntrega ?? 9999
+      const ordemB = b.ordemEntrega ?? 9999
+      return ordemA - ordemB
+    })
+
     return {
       romaneio: {
         id: romaneio.id,
@@ -216,7 +227,7 @@ export class RomaneioService {
         dataInicio: romaneio.dataInicio,
         dataFim: romaneio.dataFim
       },
-      entregas: Object.values(agrupado)
+      entregas: entregasOrdenadas
     }
   }
 
@@ -517,6 +528,10 @@ export class RomaneioService {
         })
         continue
       }
+
+      console.log(
+        `[ROTA][GEOCODING] Cliente: ${cliente.nomeFantasia || cliente.id} | Tentativa usada: ${resultado.tentativaUsada}`
+      )
 
       if (cliente.latitude == null || cliente.longitude == null) {
         await this.prisma.cliente.update({
