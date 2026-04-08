@@ -1,262 +1,388 @@
-import { Injectable } from "@nestjs/common"
+import { Injectable, NotFoundException } from "@nestjs/common"
 import { PrismaService } from "src/shared/prisma/prisma.service"
 import { CreateClienteDTO } from "./dto/create-cliente.dto"
 import { UpdateClienteDTO } from "./dto/update-cliente.dto"
-import { geocodeEndereco } from "src/shared/services/geocode.service"
+import { GeocodingService } from "src/shared/services/geocoding.service"
+import { RegiaoClienteService } from "src/shared/services/regiao-cliente.service"
 
 @Injectable()
-export class ClienteService{
+export class ClienteService {
+  constructor(
+    private prisma: PrismaService,
+    private geocodingService: GeocodingService,
+    private regiaoClienteService: RegiaoClienteService
+  ) {}
 
- constructor(private prisma:PrismaService){}
+  async criar(dto: CreateClienteDTO) {
+    let latitude: number | null = null
+    let longitude: number | null = null
 
+    const geo = await this.geocodingService.garantirCoordenadasCliente({
+      id: "novo-cliente",
+      nomeFantasia: dto.nomeFantasia,
+      endereco: dto.endereco,
+      bairro: dto.bairro,
+      cidade: dto.cidade,
+      estado: dto.estado,
+      latitude: null,
+      longitude: null
+    })
 
- async criar(dto: CreateClienteDTO){
+    if (geo.ok) {
+      latitude = geo.latitude
+      longitude = geo.longitude
+    }
 
- const enderecoCompleto = `${dto.endereco}, ${dto.cidade}, ${dto.estado}`
+    const regiao = this.regiaoClienteService.definirRegiao({
+      cidade: dto.cidade,
+      estado: dto.estado,
+      bairro: dto.bairro,
+      latitude,
+      longitude
+    })
 
- const coords = await geocodeEndereco(enderecoCompleto)
+    return this.prisma.cliente.create({
+      data: {
+        nomeFantasia: dto.nomeFantasia ?? "",
+        telefone: dto.telefone ?? "",
+        contato: dto.contato ?? "",
+        email: dto.email ?? "",
+        cidade: dto.cidade ?? "",
+        estado: dto.estado ?? "",
+        endereco: dto.endereco ?? "",
+        bairro: dto.bairro ?? "",
+        cep: dto.cep ?? "",
+        inscricaoEstadual: dto.inscricaoEstadual ?? "",
+        regiao,
 
- return this.prisma.cliente.create({
-  data:{
-   nomeFantasia: dto.nomeFantasia ?? "",
-   telefone: dto.telefone ?? "",
-   contato: dto.contato ?? "",
-   email: dto.email ?? "",
-   cidade: dto.cidade ?? "",
-   estado: dto.estado ?? "",
-   endereco: dto.endereco ?? "",
-   bairro: dto.bairro ?? "",
-   cep: dto.cep ?? "",
-   inscricaoEstadual: dto.inscricaoEstadual ?? "",
+        latitude,
+        longitude,
 
-   latitude: coords?.latitude,
-   longitude: coords?.longitude,
-
-   ativo: true
+        ativo: true
+      }
+    })
   }
- })
 
-}
+  async atualizar(id: string, dto: UpdateClienteDTO) {
+    const clienteAtual = await this.prisma.cliente.findUnique({
+      where: { id }
+    })
 
-async atualizar(id: string, dto: UpdateClienteDTO) {
+    if (!clienteAtual) {
+      throw new NotFoundException("Cliente não encontrado")
+    }
 
- const clienteAtual = await this.prisma.cliente.findUnique({
-  where: { id }
- })
+    let latitude = clienteAtual.latitude
+    let longitude = clienteAtual.longitude
 
- let latitude = clienteAtual?.latitude
- let longitude = clienteAtual?.longitude
+    const enderecoMudou =
+      dto.endereco !== undefined ||
+      dto.bairro !== undefined ||
+      dto.cidade !== undefined ||
+      dto.estado !== undefined ||
+      dto.cep !== undefined
 
- // 👉 SE NÃO TEM COORDENADA OU MUDOU ENDEREÇO
- if (
-  !latitude ||
-  !longitude ||
-  dto.endereco ||
-  dto.cidade ||
-  dto.estado ||
-  dto.bairro ||
-  dto.cep
- ) {
+    if (latitude == null || longitude == null || enderecoMudou) {
+      const geo = await this.geocodingService.garantirCoordenadasCliente({
+        id: clienteAtual.id,
+        nomeFantasia: dto.nomeFantasia ?? clienteAtual.nomeFantasia,
+        endereco: dto.endereco ?? clienteAtual.endereco,
+        bairro: dto.bairro ?? clienteAtual.bairro,
+        cidade: dto.cidade ?? clienteAtual.cidade,
+        estado: dto.estado ?? clienteAtual.estado,
+        latitude: null,
+        longitude: null
+      })
 
-  const enderecoCompleto = `
-   ${dto.endereco || clienteAtual?.endereco},
-   ${dto.bairro || clienteAtual?.bairro},
-   ${dto.cidade || clienteAtual?.cidade},
-   ${dto.estado || clienteAtual?.estado},
-   ${dto.cep || clienteAtual?.cep},
-   Brasil
-  `
-   .replace(/\s+/g, " ")
-   .trim()
+      if (geo.ok) {
+        latitude = geo.latitude
+        longitude = geo.longitude
+      }
+    }
 
-  const coords = await geocodeEndereco(enderecoCompleto)
+    const regiao = this.regiaoClienteService.definirRegiao({
+      cidade: dto.cidade ?? clienteAtual.cidade,
+      estado: dto.estado ?? clienteAtual.estado,
+      bairro: dto.bairro ?? clienteAtual.bairro,
+      latitude,
+      longitude
+    })
 
-  if (coords) {
-   latitude = coords.latitude
-   longitude = coords.longitude
+    return this.prisma.cliente.update({
+      where: { id },
+      data: {
+        ...dto,
+        latitude,
+        longitude,
+        regiao
+      }
+    })
   }
- }
 
- 
+  async gerarCoordenadas(id: string) {
+    const cliente = await this.prisma.cliente.findUnique({
+      where: { id }
+    })
 
- return this.prisma.cliente.update({
-  where: { id },
-  data: {
-   ...dto,
-   latitude,
-   longitude
+    if (!cliente) {
+      throw new NotFoundException("Cliente não encontrado")
+    }
+
+    const geo = await this.geocodingService.garantirCoordenadasCliente({
+      id: cliente.id,
+      nomeFantasia: cliente.nomeFantasia,
+      endereco: cliente.endereco,
+      bairro: cliente.bairro,
+      cidade: cliente.cidade,
+      estado: cliente.estado,
+      latitude: null,
+      longitude: null
+    })
+
+    if (!geo.ok) {
+      return {
+        message: "Endereço não encontrado",
+        sucesso: false,
+        motivo: geo.motivo,
+        endereco: geo.enderecoCompleto
+      }
+    }
+
+    const regiao = this.regiaoClienteService.definirRegiao({
+      cidade: cliente.cidade,
+      estado: cliente.estado,
+      bairro: cliente.bairro,
+      latitude: geo.latitude,
+      longitude: geo.longitude
+    })
+
+    return this.prisma.cliente.update({
+      where: { id },
+      data: {
+        latitude: geo.latitude,
+        longitude: geo.longitude,
+        regiao
+      }
+    })
   }
- })
-}
 
-
-async gerarCoordenadas(id: string) {
-
- const cliente = await this.prisma.cliente.findUnique({
-  where: { id }
- })
-
- console.log("Serviço",id)
-
- const enderecoCompleto = `
-  ${cliente?.endereco},
-  ${cliente?.bairro},
-  ${cliente?.cidade},
-  ${cliente?.estado},
-  ${cliente?.cep},
-  Brasil
- `
-  .replace(/\n/g, " ")
-  .replace(/\s+/g, " ")
-  .replace(/,+/g, ",") // remove vírgulas duplicadas
-  .replace(", ,", ",") // remove vazio
-  .trim()
-
- const coords = await geocodeEndereco(enderecoCompleto)
-
- if (!coords) {
-  console.log("❌ Não encontrou coordenadas para:", enderecoCompleto)
-
-  return {
-    message: "Endereço não encontrado",
-    sucesso: false
+  async buscarClientes(nome?: string) {
+    return this.prisma.cliente.findMany({
+      where: {
+        nomeFantasia: {
+          contains: nome,
+          mode: "insensitive"
+        }
+      },
+      orderBy: {
+        nomeFantasia: "asc"
+      },
+      take: 10
+    })
   }
-}
 
- return this.prisma.cliente.update({
-  where: { id },
-  data: {
-   latitude: coords.latitude,
-   longitude: coords.longitude
-  }
- })
-}
+  async listar(
+    page: number,
+    search?: string,
+    cidade?: string,
+    estado?: string
+  ) {
+    const limit = 10
+    const skip = (page - 1) * limit
 
-async buscarClientes(nome?: string) {
-  return this.prisma.cliente.findMany({
-    where: {
-      nomeFantasia: {
-        contains: nome,
+    const where: any = {}
+
+    if (search) {
+      where.OR = [
+        {
+          nomeFantasia: {
+            contains: search,
+            mode: "insensitive"
+          }
+        },
+        {
+          endereco: {
+            contains: search,
+            mode: "insensitive"
+          }
+        },
+        {
+          bairro: {
+            contains: search,
+            mode: "insensitive"
+          }
+        }
+      ]
+    }
+
+    if (cidade) {
+      where.cidade = {
+        contains: cidade,
         mode: "insensitive"
       }
-    },
-    take: 10 // limita pra não pesar
-  })
-}
+    }
 
+    if (estado) {
+      where.estado = {
+        contains: estado,
+        mode: "insensitive"
+      }
+    }
 
-async listar(page:number,search?:string,cidade?:string,estado?:string){
+    const [clientes, total] = await this.prisma.$transaction([
+      this.prisma.cliente.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: {
+          createdAt: "desc"
+        }
+      }),
+      this.prisma.cliente.count({ where })
+    ])
 
- const limit = 10
- const skip = (page-1)*limit
-
- const where:any = {}
-
- if(search){
-  where.nomeFantasia = {
-   contains: search,
-   mode: "insensitive"
+    return {
+      data: clientes,
+      total
+    }
   }
- }
 
- if(cidade){
-  where.cidade = {
-   contains: cidade,
-   mode: "insensitive"
+  async listarMapa() {
+    const clientes = await this.prisma.cliente.findMany({
+      where: {
+        latitude: { not: null },
+        longitude: { not: null },
+        ativo: true
+      },
+      select: {
+        id: true,
+        nomeFantasia: true,
+        latitude: true,
+        longitude: true,
+        cidade: true,
+        bairro: true,
+        endereco: true,
+        regiao: true
+      },
+      orderBy: {
+        nomeFantasia: "asc"
+      }
+    })
+
+    console.log("CLIENTES MAPA:", clientes)
+
+    return clientes
   }
- }
 
+  async listarPorRegiao() {
+    const clientes = await this.prisma.cliente.findMany({
+      orderBy: [{ regiao: "asc" }, { nomeFantasia: "asc" }]
+    })
 
- const [clientes,total] = await this.prisma.$transaction([
-  this.prisma.cliente.findMany({
-   where,
-   skip,
-   take:limit
-  }),
-  this.prisma.cliente.count({where})
- ])
+    const agrupado: Record<string, any[]> = {}
 
- return {
-  data:clientes,
-  total
- }
-}
+    for (const cliente of clientes) {
+      const regiao = cliente.regiao || "Sem região definida"
 
-// async listarMapa(){
-//  return this.prisma.cliente.findMany({
-//   take: 10
-//  })
-// }
+      if (!agrupado[regiao]) {
+        agrupado[regiao] = []
+      }
 
-// async listarMapa(){
+      agrupado[regiao].push(cliente)
+    }
 
-//  return this.prisma.cliente.findMany({
-//   where:{
-//    latitude:{ not:null },
-//    longitude:{ not:null },
-//    ativo:true
-//   },
-//   select:{
-//    id:true,
-//    nomeFantasia:true,
-//    latitude:true,
-//    longitude:true
-//   }
-//  })
-
-// }
-
-async listarMapa(){
-
- const clientes = await this.prisma.cliente.findMany({
-  where:{
-   latitude:{ not:null },
-   longitude:{ not:null },
-   ativo:true
-  },
-  select:{
-   id:true,
-   nomeFantasia:true,
-   latitude:true,
-   longitude:true
+    return {
+      total: clientes.length,
+      regioes: Object.entries(agrupado).map(([regiao, itens]) => ({
+        regiao,
+        quantidade: itens.length,
+        clientes: itens
+      }))
+    }
   }
- })
 
- console.log("CLIENTES MAPA:", clientes)
+  async atualizarBaseGeografica() {
+    const clientes = await this.prisma.cliente.findMany({
+      orderBy: { nomeFantasia: "asc" }
+    })
 
- return clientes
-}
-// async listarMapa(){
+    const atualizados: any[] = []
+    const pendentes: any[] = []
 
-//  return this.prisma.cliente.findMany({
-//   select:{
-//    id:true,
-//    nomeFantasia:true,
-//    latitude:true,
-//    longitude:true
-//   }
-//  })
+    for (const cliente of clientes) {
+      let latitude = cliente.latitude
+      let longitude = cliente.longitude
 
-// }
+      if (latitude == null || longitude == null) {
+        const geo = await this.geocodingService.garantirCoordenadasCliente({
+          id: cliente.id,
+          nomeFantasia: cliente.nomeFantasia,
+          endereco: cliente.endereco,
+          bairro: cliente.bairro,
+          cidade: cliente.cidade,
+          estado: cliente.estado,
+          latitude: cliente.latitude,
+          longitude: cliente.longitude
+        })
 
- 
+        if (geo.ok) {
+          latitude = geo.latitude
+          longitude = geo.longitude
+        } else {
+          pendentes.push({
+            id: cliente.id,
+            nomeFantasia: cliente.nomeFantasia,
+            motivo: geo.motivo,
+            endereco: geo.enderecoCompleto
+          })
+        }
+      }
 
- async deletar(id:string){   
+      const regiao = this.regiaoClienteService.definirRegiao({
+        cidade: cliente.cidade,
+        estado: cliente.estado,
+        bairro: cliente.bairro,
+        latitude,
+        longitude
+      })
 
-  return this.prisma.cliente.delete({
-    where:{id}
-  })
+      const clienteAtualizado = await this.prisma.cliente.update({
+        where: { id: cliente.id },
+        data: {
+          latitude,
+          longitude,
+          regiao
+        }
+      })
 
- }
+      atualizados.push(clienteAtualizado)
+    }
 
- async buscar(id:string){
+    return {
+      totalClientes: clientes.length,
+      atualizados: atualizados.length,
+      pendentes: pendentes.length,
+      clientesPendentes: pendentes
+    }
+  }
 
- return this.prisma.cliente.findUnique({
-  where:{id}
- })
+  async deletar(id: string) {
+    const cliente = await this.prisma.cliente.findUnique({
+      where: { id }
+    })
 
-}
+    if (!cliente) {
+      throw new NotFoundException("Cliente não encontrado")
+    }
 
- 
+    return this.prisma.cliente.delete({
+      where: { id }
+    })
+  }
 
+  async buscar(id: string) {
+    return this.prisma.cliente.findUnique({
+      where: { id }
+    })
+  }
 }
